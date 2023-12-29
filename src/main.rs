@@ -1,6 +1,7 @@
 mod history;
 mod parser;
 mod stats;
+mod view;
 
 use history::{History, Shell};
 use parser::CommandParser;
