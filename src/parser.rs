@@ -1,6 +1,9 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Local};
 use regex::Regex;
-use std::error::Error;
+use std::{
+    error::Error,
+    time::{Duration, UNIX_EPOCH},
+};
 
 use crate::history::Shell;
 
@@ -12,7 +15,7 @@ lazy_static::lazy_static! {
 #[derive(Debug, Default)]
 pub struct Command {
     pub commandline: String,
-    pub time: NaiveDateTime,
+    pub time: DateTime<Local>,
 
     pub command: String,
     pub arguments: Vec<String>,
@@ -20,7 +23,7 @@ pub struct Command {
 }
 
 impl Command {
-    fn from(commandline: String, time: NaiveDateTime) -> Self {
+    fn from(commandline: String, time: DateTime<Local>) -> Self {
         return Command {
             commandline,
             time,
@@ -79,7 +82,8 @@ impl CommandParser {
                 .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
                 .as_str(),
         );
-        let time = NaiveDateTime::from_timestamp_opt(timestamp.parse::<i64>()?, 0).unwrap();
+        let time =
+            DateTime::<Local>::from(UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?));
         let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
         for commandline in commands_raw_splitted {
             self.commands

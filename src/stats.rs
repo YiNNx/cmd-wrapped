@@ -40,25 +40,100 @@ impl Statistic {
             .or_insert(1);
     }
 
+    pub fn most_active_time(&self) -> (&str, usize) {
+        let boundaries = vec![0, 6, 11, 14, 19, 24];
+
+        let time_periods: Vec<usize> = boundaries
+            .windows(2)
+            .map(|window| {
+                self.daytime_counts[window[0]..window[1]]
+                    .iter()
+                    .sum::<usize>()
+                    / (window[1] - window[0])
+            })
+            .collect();
+
+        let (period, val) = time_periods
+            .iter()
+            .enumerate()
+            .max_by_key(|&(_, item)| item)
+            .unwrap();
+
+        (
+            match period {
+                0 => "Late Night",
+                1 => "Morning",
+                2 => "Noon",
+                3 => "Afternoon",
+                4 => "Night",
+                _ => "",
+            },
+            *val,
+        )
+    }
+
+    pub fn most_active_month(&self) -> (usize, usize) {
+        self.month_counts
+            .iter()
+            .enumerate()
+            .max_by_key(|&(_, item)| item)
+            .map(|(i, v)| (i, *v))
+            .unwrap()
+    }
+
     pub fn output(&self) {
         View::display_title();
 
-        View::sub_title("Most Active Time");
+        let (most_active_time, max) = self.most_active_time();
+        View::sub_title(
+            format!(
+                "Most Active Time - {}",
+                most_active_time.to_string().italic().underline()
+            )
+            .as_str(),
+        );
 
-        for (period, &count) in self.daytime_counts.iter().enumerate() {
-            View::content(format!("{:<2} {}| {}", period, "#".repeat(count / 20), count,).as_str());
+        let start = 7;
+        let gap = max / 40;
+        for i in 0..self.daytime_counts.len() {
+            let index = (start + i) % self.daytime_counts.len();
+            let count = self.daytime_counts[index];
+            View::content(
+                format!(
+                    "{:<2}  {}| {}",
+                    index.to_string().bold(),
+                    "#".repeat(count / gap),
+                    count
+                )
+                .as_str(),
+            );
         }
+
         View::wait();
 
-        // cyan_println("Most Active Day");
-        View::sub_title("Most Active Month");
-
+        let (most_active_month, max) = self.most_active_month();
+        View::sub_title(
+            format!(
+                "Most Active Month - {}",
+                chrono::Month::from_u32((most_active_month + 1) as u32)
+                    .unwrap()
+                    .name()
+                    .bold()
+                    .italic()
+                    .underline()
+            )
+            .as_str(),
+        );
+        let gap = max / 45;
         for (month, &count) in self.month_counts.iter().enumerate() {
             View::content(
                 format!(
-                    "{:<9} - {}| {:<5}",
-                    chrono::Month::from_u32((month + 1) as u32).unwrap().name(),
-                    "#".repeat(count / 20),
+                    "{:<9} {}| {:<5}\n",
+                    chrono::Month::from_u32((month + 1) as u32)
+                        .unwrap()
+                        .name()
+                        .bold(),
+                    "#".repeat(count / gap),
                     count,
                 )
                 .as_str(),
@@ -77,15 +152,7 @@ impl Statistic {
             .filter(|(command, _)| !FAV_COMMANDS_IGNORE.contains(&command.as_str()))
             .take(10)
         {
-            View::content(
-                format!(
-                    "{:<10} - {}| {}",
-                    command.cyan(),
-                    "#".repeat(count / 20),
-                    count,
-                )
-                .as_str(),
-            );
+            View::content(format!("- {:<8} {:<4} times", command.green().bold(), count,).as_str());
         }
         View::wait();
     }
