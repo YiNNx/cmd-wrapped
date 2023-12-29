@@ -6,11 +6,11 @@ use std::{
 };
 
 const TITLE: &'static str = r#"
-    ██████╗██╗     ██╗
-   ██╔════╝██║     ██║
-   ██║     ██║     ██║
-   ╚██████╗███████╗██║
-    ╚═════╝╚══════╝╚═╝
+     ██████╗███╗   ███╗██████╗ 
+    ██╔════╝████╗ ████║██╔══██╗
+    ██║     ██╔████╔██║██║  ██║
+    ╚██████╗██║╚██╔╝██║██████╔╝
+     ╚═════╝╚═╝ ╚═╝ ╚═╝╚═════╝
             
     ██╗    ██╗██████╗  █████╗ ██████╗ ██████╗ ███████╗██████╗ 
     ██║    ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗
@@ -18,6 +18,26 @@ const TITLE: &'static str = r#"
     ██║███╗██║██╔══██╗██╔══██║██╔═══╝ ██╔═══╝ ██╔══╝  ██║  ██║
     ╚███╔███╔╝██║  ██║██║  ██║██║     ██║     ███████╗██████╔╝
      ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═════╝ "#;
+
+lazy_static::lazy_static! {
+    static ref HI: String = format!(
+    r#"
+                          ____________________________
+                        /  {}         \
+                        \  {}  /
+                          ----------------------------
+                                         \
+                                          \"#,
+    "Find what your 2023".white(),"looks like in command-line!".white()
+    );
+}
+
+const FERRIS: &'static str = r#"
+                                              __~^~^~__
+                                         \) /           \ (/
+                                           '_   ⌾ ◡ ⌾   _'
+                                          \\   ¯¯¯¯¯¯¯   //
+"#;
 
 pub struct View {}
 
@@ -34,16 +54,18 @@ impl View {
         }
         println!("{res}");
         Self::line_break();
-        Self::sub_title(&"Find what's your 2023 looks like in command-line!".green().to_string());
+        print!("{}", &HI.to_string().cyan().bold());
+        print!("{}", &FERRIS.to_string().red().bold());
         Self::wait();
     }
 
     pub fn sub_title(str: &str) {
+        Self::line_break();
         Self::cyan_println(str);
         Self::line_break();
     }
 
-    pub fn content(str:&str){
+    pub fn content(str: &str) {
         Self::scroll(str)
     }
 
@@ -71,7 +93,7 @@ impl View {
     }
 
     pub fn clear() {
-        print!("{esc}[2J{esc}[1;1H\n\n\n", esc = 27 as char);
+        print!("{esc}[2J{esc}[1;1H\n\n", esc = 27 as char);
     }
 
     pub fn padding() {

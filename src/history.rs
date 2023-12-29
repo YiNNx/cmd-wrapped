@@ -58,7 +58,7 @@ impl Iterator for History {
             if buf.is_empty() {
                 return if line.is_empty() { None } else { Some(line) };
             }
-            line += String::from_utf8_lossy(&buf).into_owned().as_str().trim();
+            line += String::from_utf8_lossy(&buf).into_owned().trim();
             ended = !line.ends_with('\\');
             if !ended {
                 line = line.strip_suffix('\\')?.into();

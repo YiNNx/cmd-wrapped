@@ -35,7 +35,7 @@ impl Command {
         let command = self
             .commandline
             .strip_prefix("sudo")
-            .unwrap_or(self.commandline.as_str());
+            .unwrap_or(&self.commandline);
         let args: Vec<_> = command.split_whitespace().map(String::from).collect();
         let c = args
             .clone()
@@ -70,7 +70,7 @@ impl CommandParser {
 
     pub fn parse_zsh(mut self) -> Result<Self, Box<dyn Error>> {
         let captures = RE_ZSH_HISTORY
-            .captures(self.raw.as_str())
+            .captures(&self.raw)
             .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?;
         let (timestamp, commands_raw) = (
             captures
