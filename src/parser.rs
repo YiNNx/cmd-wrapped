@@ -9,13 +9,14 @@ use crate::history::Shell;
 
 lazy_static::lazy_static! {
     static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.*)").unwrap();
+    static ref RE_BASH_HISTORY: Regex = Regex::new(r"(\d+)\n((?:[^#\n]|\n)*)").unwrap();
     static ref RE_COMMAND: Regex = Regex::new(r"(?:\|\||&&)").expect("Invalid regex");
 }
 
 #[derive(Debug, Default)]
 pub struct Command {
     pub commandline: String,
-    pub time: DateTime<Local>,
+    pub time: Option<DateTime<Local>>,
 
     pub command: String,
     pub arguments: Vec<String>,
@@ -23,7 +24,7 @@ pub struct Command {
 }
 
 impl Command {
-    fn from(commandline: String, time: DateTime<Local>) -> Self {
+    fn from(commandline: String, time: Option<DateTime<Local>>) -> Self {
         return Command {
             commandline,
             time,
@@ -65,6 +66,7 @@ impl CommandParser {
     pub fn parse(self, shell: &Shell) -> Result<Self, Box<dyn Error>> {
         match shell {
             Shell::Zsh => self.parse_zsh(),
+            Shell::Bash => self.parse_bash(),
         }
     }
 
@@ -82,12 +84,47 @@ impl CommandParser {
                 .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
                 .as_str(),
         );
-        let time =
-            DateTime::<Local>::from(UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?));
+        let time = Some(DateTime::<Local>::from(
+            UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
+        ));
         let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
         for commandline in commands_raw_splitted {
             self.commands
                 .push(Command::from(commandline.into(), time).parse_line()?);
+        }
+        Ok(self)
+    }
+
+    pub fn parse_bash(mut self) -> Result<Self, Box<dyn Error>> {
+        let captures = RE_BASH_HISTORY
+            .captures(&self.raw)
+            .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?;
+        let (start_line, mut commands_raw_list) = (
+            captures
+                .get(1)
+                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
+                .as_str(),
+            captures
+                .get(2)
+                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
+                .as_str()
+                .to_string(),
+        );
+        let time = match start_line.parse::<u64>() {
+            Ok(timestamp) => Some(DateTime::<Local>::from(
+                UNIX_EPOCH + Duration::from_secs(timestamp),
+            )),
+            Err(_) => {
+                commands_raw_list += start_line;
+                None
+            }
+        };
+        for commands_raw in commands_raw_list.lines() {
+            let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
+            for commandline in commands_raw_splitted {
+                self.commands
+                    .push(Command::from(commandline.into(), time).parse_line()?);
+            }
         }
         Ok(self)
     }

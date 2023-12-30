@@ -32,19 +32,22 @@ impl Statistic {
             .and_modify(|counter| *counter += 1)
             .or_insert(1);
 
-        if c.time.year() != 2023 {
-            return;
+        if let Some(time) = c.time {
+            if time.year() != 2023 {
+                return;
+            }
+
+            let hour = time.hour() as usize;
+            self.daytime_counts[hour] += 1;
+
+            let month = time.month0() as usize;
+            self.month_counts[month] += 1;
+
+            self.fav_counts
+                .entry(c.command.clone())
+                .and_modify(|counter| *counter += 1)
+                .or_insert(1);
         }
-        let hour = c.time.hour() as usize;
-        self.daytime_counts[hour] += 1;
-
-        let month = c.time.month0() as usize;
-        self.month_counts[month] += 1;
-
-        self.fav_counts
-            .entry(c.command.clone())
-            .and_modify(|counter| *counter += 1)
-            .or_insert(1);
     }
 
     pub fn most_active_time(&self) -> (&str, usize) {
@@ -89,8 +92,6 @@ impl Statistic {
     }
 
     pub fn output(&self) {
-        View::display_title();
-
         let (most_active_month, max) = self.most_active_month();
         View::sub_title(&format!(
             "Most Active Month - {}",
