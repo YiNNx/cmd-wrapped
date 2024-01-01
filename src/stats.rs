@@ -140,7 +140,7 @@ impl Statistic {
         View::line_break();
         View::content(
             &format!(
-                "- Your First Command in 2023 happens in {}. It is `{}`.\n",
+                "- Your First Command in 2023 happened in {}. It is `{}`.\n",
                 self.first_command_time.to_string().cyan(),
                 self.first_command.to_string().cyan()
             )

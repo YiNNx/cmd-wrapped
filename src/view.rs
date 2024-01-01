@@ -77,7 +77,7 @@ impl View {
         Self::line_break();
         Self::line_break();
         Self::padding();
-        println!(
+        print!(
             "{}",
             "PRESS [ENTER] TO CONTINUE"
                 .bright_black()
