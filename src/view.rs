@@ -6,37 +6,41 @@ use std::{
 };
 
 const TITLE: &'static str = r#"
-     ██████╗███╗   ███╗██████╗ 
-    ██╔════╝████╗ ████║██╔══██╗
-    ██║     ██╔████╔██║██║  ██║
-    ╚██████╗██║╚██╔╝██║██████╔╝
-     ╚═════╝╚═╝ ╚═╝ ╚═╝╚═════╝
-            
-    ██╗    ██╗██████╗  █████╗ ██████╗ ██████╗ ███████╗██████╗ 
-    ██║    ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗
-    ██║ █╗ ██║██████╔╝███████║██████╔╝██████╔╝█████╗  ██║  ██║
-    ██║███╗██║██╔══██╗██╔══██║██╔═══╝ ██╔═══╝ ██╔══╝  ██║  ██║
-    ╚███╔███╔╝██║  ██║██║  ██║██║     ██║     ███████╗██████╔╝
-     ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═════╝ "#;
+         ██████╗███╗   ███╗██████╗ 
+        ██╔════╝████╗ ████║██╔══██╗
+        ██║     ██╔████╔██║██║  ██║
+        ╚██████╗██║╚██╔╝██║██████╔╝
+         ╚═════╝╚═╝ ╚═╝ ╚═╝╚═════╝
+
+        ██╗    ██╗██████╗  █████╗ ██████╗ ██████╗ ███████╗██████╗ 
+        ██║    ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗
+        ██║ █╗ ██║██████╔╝███████║██████╔╝██████╔╝█████╗  ██║  ██║
+        ██║███╗██║██╔══██╗██╔══██║██╔═══╝ ██╔═══╝ ██╔══╝  ██║  ██║
+        ╚███╔███╔╝██║  ██║██║  ██║██║     ██║     ███████╗██████╔╝
+         ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═════╝ 
+
+"#;
 
 lazy_static::lazy_static! {
     static ref HI: String = format!(
     r#"
-                          ____________________________
-                        /  {}         \
-                        \  {}  /
-                          ----------------------------
-                                         \
-                                          \"#,
+                                      ____________________________
+                                    /  {}         \
+                                    \  {} /
+                                      ----------------------------
+                                                     \
+                                                      \"#,
     "Find what your 2023".white(),"looks like in command-line!".white()
     );
 }
 
 const FERRIS: &'static str = r#"
-                                              __~^~^~__
-                                         \) /           \ (/
-                                           '_   ⌾ ◡ ⌾   _'
-                                          \\   ¯¯¯¯¯¯¯   //
+                                                          __~^~^~__
+                                                     \) /           \ (/
+                                                       '_   ⌾ ◡ ⌾   _'
+                                                      \\   ¯¯¯¯¯¯¯   //
+
+
 "#;
 
 pub struct View {}
@@ -56,7 +60,7 @@ impl View {
         Self::line_break();
         print!("{}", &HI.to_string().cyan().bold());
         print!("{}", &FERRIS.to_string().red().bold());
-        Self::wait();
+        Self::wait_title();
     }
 
     pub fn sub_title(str: &str) {
@@ -66,7 +70,7 @@ impl View {
     }
 
     pub fn content(str: &str) {
-        Self::scroll(str)
+        Self::typewriter(str)
     }
 
     pub fn hint_continue() {
@@ -82,8 +86,32 @@ impl View {
         );
     }
 
+    pub fn hint_continue_title() {
+        Self::line_break();
+        Self::line_break();
+        Self::padding();
+        Self::padding();
+        print!(
+            "{}",
+            "PRESS [ENTER] TO CONTINUE"
+                .white()
+                .to_string()
+        );
+    }
+
+
     pub fn wait() {
         Self::hint_continue();
+        std::io::stdout().flush().unwrap();
+        let mut input = String::new();
+        std::io::stdin()
+            .read_line(&mut input)
+            .expect("Failed to read line");
+        Self::clear();
+    }
+
+    pub fn wait_title() {
+        Self::hint_continue_title();
         std::io::stdout().flush().unwrap();
         let mut input = String::new();
         std::io::stdin()
@@ -109,16 +137,26 @@ impl View {
         println!("{}", str.bright_cyan().bold());
     }
 
-    pub fn scroll(s: &str) {
+    pub fn typewriter(s: &str) {
         Self::padding();
         for c in s.chars() {
             print!("{c}");
-            stdout().flush().expect("Flushing to succeed");
+            let _ = stdout().flush();
             if c == '#' {
                 sleep(Duration::from_millis(8));
             } else {
                 sleep(Duration::from_millis(25));
             }
+        }
+        println!("");
+    }
+
+    pub fn typewriter_for_line(s: &str) {
+        for c in s.lines() {
+            Self::padding();
+            println!("{c}");
+            let _ = stdout().flush();
+            sleep(Duration::from_millis(100));
         }
         println!("");
     }
