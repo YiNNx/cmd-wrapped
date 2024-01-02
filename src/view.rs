@@ -5,7 +5,13 @@ use std::{
     time::Duration,
 };
 
-const TITLE: &'static str = r#"
+lazy_static::lazy_static! {}
+
+pub struct View {}
+
+impl View {
+    pub fn display_title(year: i32) {
+        let title = r#"
          ██████╗███╗   ███╗██████╗ 
         ██╔════╝████╗ ████║██╔══██╗
         ██║     ██╔████╔██║██║  ██║
@@ -19,37 +25,32 @@ const TITLE: &'static str = r#"
         ╚███╔███╔╝██║  ██║██║  ██║██║     ██║     ███████╗██████╔╝
          ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═════╝ 
 
+
 "#;
 
-lazy_static::lazy_static! {
-    static ref HI: String = format!(
-    r#"
+        let hi: String = format!(
+            r#"
+
                                       ____________________________
                                     /  {}         \
                                     \  {} /
                                       ----------------------------
                                                      \
                                                       \"#,
-    "Find what your 2023".white(),"looks like in command-line!".white()
-    );
-}
-
-const FERRIS: &'static str = r#"
-                                                          __~^~^~__
-                                                     \) /           \ (/
-                                                       '_   ⌾ ◡ ⌾   _'
-                                                      \\   ¯¯¯¯¯¯¯   //
-
+            format!("Find what your {}", year).white(),
+            "looks like in command-line!".white()
+        );
+        let ferris = r#"
+                                                      __~^~^~__
+                                                 \) /           \ (/
+                                                   '_   0 ◡ 0   _'
+                                                  \\   ¯¯¯¯¯¯¯   //
 
 "#;
 
-pub struct View {}
-
-impl View {
-    pub fn display_title() {
         View::clear();
         let mut res = String::new();
-        for c in TITLE.chars() {
+        for c in title.chars() {
             if c == '█' {
                 res += &c.to_string();
             } else {
@@ -58,8 +59,8 @@ impl View {
         }
         println!("{res}");
         Self::line_break();
-        print!("{}", &HI.to_string().cyan().bold());
-        print!("{}", &FERRIS.to_string().red().bold());
+        print!("{}", &hi.to_string().cyan().bold());
+        print!("{}", &ferris.to_string().red().bold());
         Self::wait_title();
     }
 

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Datelike, Local, NaiveDate, Timelike};
 use colored::*;
 use num_traits::cast::FromPrimitive;
-use std::collections::HashMap;
+use std::{collections::HashMap, env};
 
 use crate::{parser::Command, view::View};
 
@@ -11,6 +11,7 @@ const FAV_COMMANDS_IGNORE: &[&str] = &[
 
 #[derive(Default)]
 pub struct Statistic {
+    year: i32,
     daytime_count_list: Vec<usize>,
     month_count_list: Vec<usize>,
     fav_counts: HashMap<String, usize>,
@@ -19,13 +20,25 @@ pub struct Statistic {
     year_command_count: usize,
     total_command_count: usize,
     first_command_time: DateTime<Local>,
-    first_command_day: usize,
     first_command: String,
 }
 
 impl Statistic {
     pub fn new() -> Statistic {
+        let now = Local::now();
+        let mut year = now.year();
+        if now.month() <= 3 {
+            year -= 1;
+        }
+        let args: Vec<String> = env::args().collect();
+        if args.len() == 2 {
+            if let Ok(year_arg) = args[1].parse::<i32>() {
+                year = year_arg;
+            }
+        }
         Statistic {
+            year,
+            first_command_time: Local::now(),
             daytime_count_list: vec![0; 24],
             month_count_list: vec![0; 12],
             graph: vec![0; 365],
@@ -41,7 +54,7 @@ impl Statistic {
         self.total_command_count += 1;
 
         if let Some(time) = c.time {
-            if time.year() != 2023 {
+            if time.year() != self.year {
                 return;
             }
 
@@ -55,8 +68,7 @@ impl Statistic {
             self.graph[day] += 1;
             self.year_command_count += 1;
 
-            if self.first_command_day == 0 || self.first_command_day > day {
-                self.first_command_day = day;
+            if self.first_command_time > time {
                 self.first_command = c.commandline.clone();
                 self.first_command_time = time;
             }
@@ -93,7 +105,7 @@ impl Statistic {
                 1 => "Morning",
                 2 => "Noon",
                 3 => "Afternoon",
-                4 => "Night",
+                4 => "Evening",
                 _ => "",
             },
             *val,
@@ -110,6 +122,7 @@ impl Statistic {
     }
 
     pub fn output(&self) {
+        View::display_title(self.year);
         let (most_active_month, max) = self.most_active_month();
         View::sub_title(&format!(
             "Most Active Month - {}",
@@ -122,6 +135,9 @@ impl Statistic {
         ));
         let gap = max / 90 + 1;
         for (month, &count) in self.month_count_list.iter().enumerate() {
+            if count == 0 {
+                continue;
+            }
             View::content(&format!(
                 "{:<9} {}| {:<5}",
                 chrono::Month::from_u32((month + 1) as u32)
@@ -139,7 +155,8 @@ impl Statistic {
         View::line_break();
         View::content(
             &format!(
-                "- Your First Command in 2023 happened in {}. It is `{}`.\n",
+                "- Your First Command in {} happened in {}. It is `{}`.\n",
+                self.year,
                 self.first_command_time.to_string().cyan(),
                 self.first_command.to_string().cyan()
             )
@@ -164,7 +181,7 @@ impl Statistic {
             &format!(
                 "- The Max Count in one day is {}  ({})",
                 max.to_string().cyan(),
-                NaiveDate::from_ymd_opt(2023, 1, 1)
+                NaiveDate::from_ymd_opt(self.year, 1, 1)
                     .unwrap()
                     .with_ordinal0(day as u32)
                     .unwrap()
@@ -203,7 +220,7 @@ impl Statistic {
         View::content(&format!(
             "[{}]    [{}] / [{}]",
             "Command".green(),
-            "2023".green(),
+            self.year.to_string().green(),
             "Total".green()
         ));
         for (command, &count) in fav_command
