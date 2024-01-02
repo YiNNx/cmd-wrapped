@@ -12,15 +12,21 @@ const FAV_COMMANDS_IGNORE: &[&str] = &[
 #[derive(Default)]
 pub struct Statistic {
     year: i32,
-    daytime_count_list: Vec<usize>,
-    month_count_list: Vec<usize>,
-    fav_counts: HashMap<String, usize>,
-    command_counts: HashMap<String, usize>,
-    graph: Vec<usize>,
-    year_command_count: usize,
-    total_command_count: usize,
-    first_command_time: DateTime<Local>,
+
+    list_daytime: Vec<usize>,
+    list_weekday: Vec<usize>,
+    list_day: Vec<usize>,
+    list_month: Vec<usize>,
+    list_month_total: Vec<usize>,
+
+    map_command: HashMap<String, usize>,
+    map_command_total: HashMap<String, usize>,
+
+    command_count: usize,
+    command_count_total: usize,
+
     first_command: String,
+    first_command_time: DateTime<Local>,
 }
 
 impl Statistic {
@@ -39,54 +45,61 @@ impl Statistic {
         Statistic {
             year,
             first_command_time: Local::now(),
-            daytime_count_list: vec![0; 24],
-            month_count_list: vec![0; 12],
-            graph: vec![0; 365],
+            list_daytime: vec![0; 24],
+            list_weekday: vec![0; 7],
+            list_month: vec![0; 12],
+            list_month_total: vec![0; 12],
+            list_day: vec![0; 365],
             ..Default::default()
         }
     }
 
     pub fn analyze(&mut self, c: &Command) {
-        self.command_counts
+        self.map_command_total
             .entry(c.command.clone())
             .and_modify(|counter| *counter += 1)
             .or_insert(1);
-        self.total_command_count += 1;
+        self.command_count_total += 1;
 
         if let Some(time) = c.time {
+            let month = time.month0() as usize;
+            self.list_month_total[month] += 1;
+
             if time.year() != self.year {
                 return;
             }
 
             let hour = time.hour() as usize;
-            self.daytime_count_list[hour] += 1;
+            self.list_daytime[hour] += 1;
 
-            let month = time.month0() as usize;
-            self.month_count_list[month] += 1;
+            let weekday = time.weekday() as usize;
+            self.list_weekday[weekday] += 1;
+
+            self.list_month[month] += 1;
 
             let day = time.ordinal0() as usize;
-            self.graph[day] += 1;
-            self.year_command_count += 1;
+            self.list_day[day] += 1;
+            self.command_count += 1;
 
             if self.first_command_time > time {
                 self.first_command = c.commandline.clone();
                 self.first_command_time = time;
             }
 
-            self.fav_counts
+            self.map_command
                 .entry(c.command.clone())
                 .and_modify(|counter| *counter += 1)
                 .or_insert(1);
         }
     }
 
-    pub fn most_active_time(&self) -> (&str, usize) {
+    pub fn most_active_period(&self) -> (&str, usize) {
         let boundaries = vec![0, 6, 11, 14, 19, 24];
 
         let time_periods: Vec<usize> = boundaries
             .windows(2)
             .map(|window| {
-                self.daytime_count_list[window[0]..window[1]]
+                self.list_daytime[window[0]..window[1]]
                     .iter()
                     .sum::<usize>()
                     / (window[1] - window[0])
@@ -112,8 +125,17 @@ impl Statistic {
         )
     }
 
+    pub fn most_active_weekday(&self) -> (usize, usize) {
+        self.list_weekday
+            .iter()
+            .enumerate()
+            .max_by_key(|&(_, item)| item)
+            .map(|(k, v)| (k, *v))
+            .unwrap()
+    }
+
     pub fn most_active_month(&self) -> (usize, usize) {
-        self.month_count_list
+        self.list_month
             .iter()
             .enumerate()
             .max_by_key(|&(_, item)| item)
@@ -123,6 +145,56 @@ impl Statistic {
 
     pub fn output(&self) {
         View::display_title(self.year);
+
+        View::sub_title(&format!(
+            "Commands in {} - {}",
+            self.year,
+            self.command_count.to_string().bold().italic().underline()
+        ));
+        View::content(&format!(
+            "- You entered the very first command `{}` on {} at {}.\n",
+            self.first_command.to_string().cyan().bold(),
+            self.first_command_time
+                .format("%m-%d")
+                .to_string()
+                .cyan()
+                .bold(),
+            self.first_command_time
+                .format("%H:%M")
+                .to_string()
+                .cyan()
+                .bold(),
+        ));
+
+        View::content(
+            &format!(
+                "- Throughout the year, a total of {} commands were entered. ({} totally in the past)\n",
+                self.command_count.to_string().cyan().bold(),
+                self.command_count_total.to_string().cyan().bold()
+            ),
+        );
+
+        let (day, max) = self
+            .list_day
+            .iter()
+            .enumerate()
+            .max_by_key(|&(_, item)| item)
+            .unwrap();
+        View::content(&format!(
+            "- The peak count of commands in a single day was {} on {}.",
+            max.to_string().cyan().bold(),
+            NaiveDate::from_ymd_opt(self.year, 1, 1)
+                .unwrap()
+                .with_ordinal0(day as u32)
+                .unwrap()
+                .to_string()
+                .cyan()
+                .bold(),
+        ));
+
+        View::sub_title(&format!("Command Graph {}", self.year));
+        View::typewriter_for_line(&View::graph(&self.list_day));
+
         let (most_active_month, max) = self.most_active_month();
         View::sub_title(&format!(
             "Most Active Month - {}",
@@ -133,121 +205,112 @@ impl Statistic {
                 .italic()
                 .underline()
         ));
-        let gap = max / 90 + 1;
-        for (month, &count) in self.month_count_list.iter().enumerate() {
+        let gap = max / 80 + 1;
+        for (month, &count) in self.list_month.iter().enumerate() {
             if count == 0 {
                 continue;
             }
             View::content(&format!(
-                "{:<9} {}| {:<5}",
-                chrono::Month::from_u32((month + 1) as u32)
-                    .unwrap()
-                    .name()
-                    .bold(),
-                "#".repeat(count / gap),
-                count,
+                "{:<125}{}",
+                &format!(
+                    "{} {}| {:<5}",
+                    chrono::Month::from_u32((month + 1) as u32).unwrap().name()[0..3].bold(),
+                    "#".repeat(count / gap).dimmed().bold(),
+                    count.to_string().bold()
+                ),
+                format!("[{:<4} total]", self.list_month_total[month],).bright_black()
             ));
         }
 
-        View::sub_title("Command Graph");
-        View::typewriter_for_line(&View::graph(&self.graph));
-
-        View::line_break();
-        View::content(
-            &format!(
-                "- Your First Command in {} happened in {}. It is `{}`.\n",
-                self.year,
-                self.first_command_time.to_string().cyan(),
-                self.first_command.to_string().cyan()
-            )
-            .white(),
-        );
-        View::content(
-            &format!(
-                "- Command Count in the year - {}   ({} totally in the past)\n",
-                self.year_command_count.to_string().cyan(),
-                self.total_command_count.to_string().cyan()
-            )
-            .white(),
-        );
-
-        let (day, max) = self
-            .graph
-            .iter()
-            .enumerate()
-            .max_by_key(|&(_, item)| item)
-            .unwrap();
-        View::content(
-            &format!(
-                "- The Max Count in one day is {}  ({})",
-                max.to_string().cyan(),
-                NaiveDate::from_ymd_opt(self.year, 1, 1)
-                    .unwrap()
-                    .with_ordinal0(day as u32)
-                    .unwrap()
-                    .to_string()
-                    .cyan(),
-            )
-            .white(),
-        );
-
         View::wait();
 
-        let (most_active_time, _) = self.most_active_time();
+        let (most_active_weekday, max) = self.most_active_weekday();
+        let str_weekday = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        View::sub_title(&format!(
+            "Most Active Weekday - {}",
+            str_weekday[most_active_weekday]
+                .to_string()
+                .italic()
+                .underline()
+        ));
+        let gap = max / 90 + 1;
+        for (weekday, &count) in self.list_weekday.iter().enumerate() {
+            View::content(&format!(
+                "{} {}| {:<5}",
+                str_weekday[weekday].bold(),
+                "#".repeat(count / gap).dimmed().bold(),
+                if count == max {
+                    count.to_string().green().bold()
+                } else {
+                    count.to_string().bold()
+                },
+            ));
+        }
+
+        let (most_active_time, _) = self.most_active_period();
         View::sub_title(&format!(
             "Most Active Time - {}",
             most_active_time.to_string().italic().underline()
         ));
 
         let start = 7;
-        let gap = self.daytime_count_list.iter().max().unwrap() / 90 + 1;
-        for i in 0..self.daytime_count_list.len() {
-            let index = (start + i) % self.daytime_count_list.len();
-            let count = self.daytime_count_list[index];
+        let max = *self.list_daytime.iter().max().unwrap();
+        let gap = max / 90 + 1;
+        for i in 0..self.list_daytime.len() {
+            let index = (start + i) % self.list_daytime.len();
+            let count = self.list_daytime[index];
             View::content(&format!(
                 "{:<2}  {}| {}",
                 index.to_string().bold(),
-                "#".repeat(count / gap),
-                count
+                "#".repeat(count / gap).dimmed().bold(),
+                if count == max {
+                    count.to_string().green().bold()
+                } else {
+                    count.to_string().bold()
+                },
             ));
         }
         View::wait();
 
         View::sub_title("Favorite Commands");
 
-        let mut fav_command: Vec<_> = self.fav_counts.iter().collect();
+        let mut fav_command: Vec<_> = self.map_command.iter().collect();
         fav_command.sort_by(|a, b| b.1.cmp(&a.1));
-        View::content(&format!(
-            "[{}]    [{}] / [{}]",
-            "Command".green(),
-            self.year.to_string().green(),
-            "Total".green()
-        ));
         for (command, &count) in fav_command
             .iter()
             .filter(|(command, _)| !FAV_COMMANDS_IGNORE.contains(&command.as_str()))
             .take(10)
         {
-            View::content(
+            View::content(&format!(
+                "- {:<50} {:<6}{}",
+                command.green().bold(),
+                count,
                 format!(
-                    "- {:<11} {:<5} /  {:<4}",
-                    command.green().bold(),
-                    count,
-                    self.command_counts.get(*command).unwrap()
+                    "[{:<4} total]",
+                    self.map_command_total.get(*command).unwrap(),
                 )
-                .as_str(),
-            );
+                .bright_black()
+            ));
         }
 
         View::sub_title("Also Frequently Used");
 
-        for (command, _) in fav_command
+        for (command, count) in fav_command
             .iter()
             .filter(|(command, _)| !FAV_COMMANDS_IGNORE.contains(&command.as_str()))
             .skip(10)
             .take(15)
         {
-            View::content(&format!("- {:<8}", command.bold()));
+            View::content(&format!(
+                "- {:<50} {:<6}{}",
+                command.green().bold(),
+                count,
+                format!(
+                    "[{:<4} total]",
+                    self.map_command_total.get(*command).unwrap(),
+                )
+                .bright_black()
+            ));
         }
         View::content("...");
 

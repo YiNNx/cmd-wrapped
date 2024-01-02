@@ -1,5 +1,5 @@
 [package]
-name = "commandline_wrapped"
+name = "cmd-wrapped"
 version = "0.1.0"
 edition = "2021"
 

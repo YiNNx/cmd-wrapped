@@ -22,9 +22,12 @@ impl Shell {
             "bash" => {
                 View::clear();
                 View::content(
-                    "Notice: If you haven't set the $HISTTIMEFORMAT for bash, the stats related with time may be INVALID :(",
+                    "It appears that you are using Bash",
                 );
-                View::content("(but other parts will be ok)");
+                View::content(
+                    "If you haven't configured the $HISTTIMEFORMAT for Bash, the time-related statistics may be INVALID :(",
+                );
+                View::content("(but other components will remain unaffected.)");
                 View::wait();
                 Self::Bash
             }

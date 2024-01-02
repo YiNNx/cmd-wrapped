@@ -12,41 +12,55 @@ pub struct View {}
 impl View {
     pub fn display_title(year: i32) {
         let title = r#"
-         ██████╗███╗   ███╗██████╗ 
-        ██╔════╝████╗ ████║██╔══██╗
-        ██║     ██╔████╔██║██║  ██║
-        ╚██████╗██║╚██╔╝██║██████╔╝
-         ╚═════╝╚═╝ ╚═╝ ╚═╝╚═════╝
 
-        ██╗    ██╗██████╗  █████╗ ██████╗ ██████╗ ███████╗██████╗ 
-        ██║    ██║██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔════╝██╔══██╗
-        ██║ █╗ ██║██████╔╝███████║██████╔╝██████╔╝█████╗  ██║  ██║
-        ██║███╗██║██╔══██╗██╔══██║██╔═══╝ ██╔═══╝ ██╔══╝  ██║  ██║
-        ╚███╔███╔╝██║  ██║██║  ██║██║     ██║     ███████╗██████╔╝
-         ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝     ╚══════╝╚═════╝ 
+        
+         ██████╗ ███╗   ███╗ ██████╗ 
+        ██╔════╝ ████╗ ████║ ██╔══██╗
+        ██║      ██╔████╔██║ ██║  ██║
+        ╚██████╗ ██║╚██╔╝██║ ██████╔╝
+         ╚═════╝ ╚═╝ ╚═╝ ╚═╝ ╚═════╝
+        ██╗     ██╗ ███████╗  ██████╗  ███████╗ ███████╗ ████████╗███████╗ 
+        ██║     ██║ ██╔═══██╗██╔═══██╗ ██╔═══██╗██╔═══██╗██╔═════╝██╔═══██╗
+        ██║ ██╗ ██║ ███████╔╝████████║ ███████╔╝███████╔╝██████╗  ██║   ██║
+        ██║████╗██║ ██╔═══██╗██╔═══██║ ██╔════╝ ██╔════╝ ██╔═══╝  ██║   ██║
+        ╚███╔═███╔╝ ██║   ██║██║   ██║ ██║      ██║      ████████╗███████╔╝
+         ╚══╝ ╚══╝  ╚═╝   ╚═╝╚═╝   ╚═╝ ╚═╝      ╚═╝      ╚═══════╝╚══════╝ 
 
 
 "#;
 
-        let hi: String = format!(
-            r#"
+        let hi: String = String::new()
+            + &r#"                      
 
-                                      ____________________________
-                                    /  {}         \
-                                    \  {} /
-                                      ----------------------------
-                                                     \
-                                                      \"#,
-            format!("Find what your {}", year).white(),
-            "looks like in command-line!".white()
-        );
+
+
+                                       ――――――――――――――――――――――――――――――――
+                                    /   "#
+                .cyan()
+                .to_string()
+            + &format!("Find what your {}", year)
+            + &r#"             \
+                                   |    "#
+                .cyan()
+                .to_string()
+            + "looks like in command-line!"
+            + &r#"      |
+                                    \   "#
+                .cyan()
+                .to_string()
+            + "Press [Enter] to page through."
+            + &r#"  /   
+                                       ――――――――――――――――――――――――――――――――
+                                                       \
+                                                        \"#
+            .cyan()
+            .to_string();
+
         let ferris = r#"
-                                                      __~^~^~__
-                                                 \) /           \ (/
-                                                   '_   0 ◡ 0   _'
-                                                  \\   ¯¯¯¯¯¯¯   //
-
-"#;
+                                                           __~^~^~__
+                                                      \) /           \ (/
+                                                        '_   0 ◡ 0   _'
+                                                       \\   ¯¯¯¯¯¯¯   //"#;
 
         View::clear();
         let mut res = String::new();
@@ -59,9 +73,9 @@ impl View {
         }
         println!("{res}");
         Self::line_break();
-        print!("{}", &hi.to_string().cyan().bold());
+        print!("{}", &hi);
         print!("{}", &ferris.to_string().red().bold());
-        Self::wait_title();
+        Self::wait();
     }
 
     pub fn sub_title(str: &str) {
@@ -74,39 +88,7 @@ impl View {
         Self::typewriter(str)
     }
 
-    pub fn hint_continue() {
-        Self::line_break();
-        Self::line_break();
-        Self::padding();
-        print!(
-            "{}",
-            "PRESS [ENTER] TO CONTINUE"
-                .bright_black()
-                .bold()
-                .to_string()
-        );
-    }
-
-    pub fn hint_continue_title() {
-        Self::line_break();
-        Self::line_break();
-        Self::padding();
-        Self::padding();
-        print!("{}", "PRESS [ENTER] TO CONTINUE".white().to_string());
-    }
-
     pub fn wait() {
-        Self::hint_continue();
-        std::io::stdout().flush().unwrap();
-        let mut input = String::new();
-        std::io::stdin()
-            .read_line(&mut input)
-            .expect("Failed to read line");
-        Self::clear();
-    }
-
-    pub fn wait_title() {
-        Self::hint_continue_title();
         std::io::stdout().flush().unwrap();
         let mut input = String::new();
         std::io::stdin()
@@ -116,7 +98,7 @@ impl View {
     }
 
     pub fn clear() {
-        print!("{esc}[2J{esc}[1;1H\n\n", esc = 27 as char);
+        print!("{esc}[2J{esc}[1;1H\n", esc = 27 as char);
     }
 
     pub fn padding() {
@@ -129,7 +111,7 @@ impl View {
 
     pub fn cyan_println(str: &str) {
         Self::padding();
-        println!("{}", str.bright_cyan().bold());
+        println!("{}", str.cyan().bold());
     }
 
     pub fn typewriter(s: &str) {
@@ -139,7 +121,7 @@ impl View {
             let _ = stdout().flush();
             if c == '#' {
                 sleep(Duration::from_millis(8));
-            } else {
+            } else if c != ' ' {
                 sleep(Duration::from_millis(25));
             }
         }
@@ -151,9 +133,8 @@ impl View {
             Self::padding();
             println!("{c}");
             let _ = stdout().flush();
-            sleep(Duration::from_millis(100));
+            sleep(Duration::from_millis(150));
         }
-        println!("");
     }
 
     pub fn graph(graph_list: &Vec<usize>) -> String {
@@ -169,7 +150,7 @@ impl View {
                     res += &format!(
                         "{:>2}",
                         match graph_list[ordinal] {
-                            0 => "  ".white(),
+                            0 => "  ".normal(),
                             1..=30 => "■".cyan().dimmed(),
                             31..=50 => "■".cyan(),
                             _ => "■".bright_cyan().bold(),
