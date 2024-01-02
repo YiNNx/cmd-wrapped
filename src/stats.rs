@@ -110,7 +110,6 @@ impl Statistic {
     }
 
     pub fn output(&self) {
-
         let (most_active_month, max) = self.most_active_month();
         View::sub_title(&format!(
             "Most Active Month - {}",
@@ -133,9 +132,9 @@ impl Statistic {
                 count,
             ));
         }
-        
+
         View::sub_title("Command Graph");
-        View::typewriter_for_line(&self.graph());
+        View::typewriter_for_line(&View::graph(&self.graph));
 
         View::line_break();
         View::content(
@@ -168,14 +167,14 @@ impl Statistic {
                 NaiveDate::from_ymd_opt(2023, 1, 1)
                     .unwrap()
                     .with_ordinal0(day as u32)
-                    .unwrap().to_string().cyan(),
+                    .unwrap()
+                    .to_string()
+                    .cyan(),
             )
             .white(),
         );
 
-
         View::wait();
-
 
         let (most_active_time, _) = self.most_active_time();
         View::sub_title(&format!(
@@ -236,31 +235,5 @@ impl Statistic {
         View::content("...");
 
         View::wait();
-    }
-
-    pub fn graph(&self) -> String {
-        let mut res = format!(" {}\n", "―".repeat(110))
-        +&format!("│  Jan.      Feb.    Mar.    Apr.      May     Jun.    Jul.      Aug.    Sep.    Oct.      Nov.    Dec.        │\n");
-        for i in 0..=6 {
-            res += &format!("│ ");
-            for j in 0..=52 {
-                let ordinal = i + j * 7;
-                if ordinal >= 365 {
-                    res += "  "
-                } else {
-                    res += &format!(
-                        "{:>2}",
-                        match self.graph[ordinal] {
-                            0 => "  ".white(),
-                            1..=30 => "▩".cyan(),
-                            _ => "▩".cyan().bold(),
-                        }
-                    )
-                }
-            }
-            res += &format!("   │\n");
-        }
-        res += &format!(" {}", "_".repeat(110));
-        res
     }
 }

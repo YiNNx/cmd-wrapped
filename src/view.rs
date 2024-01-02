@@ -91,14 +91,8 @@ impl View {
         Self::line_break();
         Self::padding();
         Self::padding();
-        print!(
-            "{}",
-            "PRESS [ENTER] TO CONTINUE"
-                .white()
-                .to_string()
-        );
+        print!("{}", "PRESS [ENTER] TO CONTINUE".white().to_string());
     }
-
 
     pub fn wait() {
         Self::hint_continue();
@@ -159,5 +153,32 @@ impl View {
             sleep(Duration::from_millis(100));
         }
         println!("");
+    }
+
+    pub fn graph(graph_list: &Vec<usize>) -> String {
+        let mut res = format!(" {}\n", "―".repeat(110)).to_string()
+        +&format!("│  Jan       Feb     Mar     Apr       May     Jun     Jul       Aug     Sep     Oct       Nov     Dec         │\n").dimmed();
+        for i in 0..=6 {
+            res += &format!("│ ");
+            for j in 0..=52 {
+                let ordinal = i + j * 7;
+                if ordinal >= 365 {
+                    res += "  "
+                } else {
+                    res += &format!(
+                        "{:>2}",
+                        match graph_list[ordinal] {
+                            0 => "  ".white(),
+                            1..=30 => "■".cyan().dimmed(),
+                            31..=50 => "■".cyan(),
+                            _ => "■".bright_cyan().bold(),
+                        }
+                    )
+                }
+            }
+            res += &format!("   │\n");
+        }
+        res += &format!(" {}", "_".repeat(110));
+        res
     }
 }
