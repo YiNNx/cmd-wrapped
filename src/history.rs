@@ -21,18 +21,23 @@ impl Shell {
             "zsh" => Self::Zsh,
             "bash" => {
                 View::clear();
-                View::content(
-                    "It appears that you are using Bash",
-                );
+                View::content("It appears that you are using Bash");
                 View::content(
                     "If you haven't configured the $HISTTIMEFORMAT for Bash, the time-related statistics may be INVALID :(",
                 );
                 View::content("(but other components will remain unaffected.)");
+                View::content("Press [Enter] to continue");
                 View::wait();
                 Self::Bash
             }
             // "fish" => Self::Fish,
-            _ => return Err(format!("shell type not supported yet").into()),
+            _ => {
+                View::content(&format!(
+                    "Sorry, {} is not supported yet\n\n",
+                    shell.split('/').last().unwrap_or("")
+                ));
+                std::process::exit(1);
+            }
         })
     }
 

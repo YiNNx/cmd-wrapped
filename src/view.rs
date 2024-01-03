@@ -130,10 +130,10 @@ impl View {
 
     pub fn typewriter_for_line(s: &str) {
         for c in s.lines() {
+            sleep(Duration::from_millis(150));
             Self::padding();
             println!("{c}");
             let _ = stdout().flush();
-            sleep(Duration::from_millis(150));
         }
     }
 

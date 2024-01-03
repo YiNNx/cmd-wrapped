@@ -147,12 +147,12 @@ impl Statistic {
         View::display_title(self.year);
 
         View::sub_title(&format!(
-            "Commands in {} - {}",
-            self.year,
+            "Commands - {}",
             self.command_count.to_string().bold().italic().underline()
         ));
         View::content(&format!(
-            "- You entered the very first command `{}` on {} at {}.\n",
+            "- In {}, you entered the very first command `{}` on {} at {}.\n",
+            self.year,
             self.first_command.to_string().cyan().bold(),
             self.first_command_time
                 .format("%m-%d")
@@ -166,13 +166,11 @@ impl Statistic {
                 .bold(),
         ));
 
-        View::content(
-            &format!(
-                "- Throughout the year, a total of {} commands were entered. ({} totally in the past)\n",
-                self.command_count.to_string().cyan().bold(),
-                self.command_count_total.to_string().cyan().bold()
-            ),
-        );
+        View::content(&format!(
+            "- Throughout the year, a total of {} commands were entered. (Total in history: {})\n",
+            self.command_count.to_string().cyan().bold(),
+            self.command_count_total.to_string().cyan().bold()
+        ));
 
         let (day, max) = self
             .list_day
@@ -181,8 +179,7 @@ impl Statistic {
             .max_by_key(|&(_, item)| item)
             .unwrap();
         View::content(&format!(
-            "- The peak count of commands in a single day was {} on {}.",
-            max.to_string().cyan().bold(),
+            "- On {}, a peak of {} commands were entered in a single day.",
             NaiveDate::from_ymd_opt(self.year, 1, 1)
                 .unwrap()
                 .with_ordinal0(day as u32)
@@ -190,6 +187,7 @@ impl Statistic {
                 .to_string()
                 .cyan()
                 .bold(),
+            max.to_string().cyan().bold(),
         ));
 
         View::sub_title(&format!("Command Graph {}", self.year));
@@ -314,6 +312,21 @@ impl Statistic {
         }
         View::content("...");
 
+        View::wait();
+
+        View::sub_title(&format!("All {} command line history wrapped!", self.year));
+
+        View::typewriter_for_line(
+            &(String::new()
+                + "Specify other years with arguments, such as `./cmd-wrapped 2022`\n\n"
+                + &format!(
+                    "If you enjoy this open-source CLI, give it a star:  {}",
+                    "https://github.com/YiNNx/cmd-wrapped\n\n"
+                        .bold()
+                        .to_string()
+                        + "Also feel free to submit ideas or issues! :-D"
+                )),
+        );
         View::wait();
     }
 }
