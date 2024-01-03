@@ -26,7 +26,7 @@ Find out what the past year looks like in command-line!
    cargo run -- 2022
    ```
 
-2. Download from Release
+2. Download from Release, unzip the binary file and run directly
 
 ## Credits & License
 
