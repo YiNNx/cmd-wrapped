@@ -5,12 +5,12 @@ use std::{
     time::Duration,
 };
 
-lazy_static::lazy_static! {}
+pub const STR_WEEKDAY: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-pub struct View {}
+pub struct View;
 
 impl View {
-    pub fn display_title(year: i32) {
+    pub fn display_cover(year: i32) {
         let title = r#"
 
         
@@ -62,7 +62,7 @@ impl View {
                                                         '_   0 ◡ 0   _'
                                                        \\   ¯¯¯¯¯¯¯   //"#;
 
-        View::clear();
+        Self::clear();
         let mut res = String::new();
         for c in title.chars() {
             if c == '█' {
@@ -84,8 +84,25 @@ impl View {
         Self::line_break();
     }
 
+    pub fn sub_title_with_keyword<T: ToString>(sub_title: &str, keyword: T) {
+        Self::sub_title(
+            &(sub_title.to_string()
+                + " - "
+                + &keyword
+                    .to_string()
+                    .italic()
+                    .underline()
+                    .italic()
+                    .to_string()),
+        );
+    }
+
     pub fn content(str: &str) {
         Self::typewriter(str)
+    }
+
+    pub fn style_keyword<T: ToString>(keyword: T) -> ColoredString {
+        keyword.to_string().cyan().bold()
     }
 
     pub fn wait() {
@@ -125,7 +142,7 @@ impl View {
                 sleep(Duration::from_millis(25));
             }
         }
-        println!("");
+        Self::line_break();
     }
 
     pub fn typewriter_for_line(s: &str) {
@@ -162,5 +179,58 @@ impl View {
         }
         res += &format!(" {}", "_".repeat(110));
         res
+    }
+
+    pub fn histogram<T: ToString>(index: T, count: usize, max: usize) {
+        Self::content(&format!(
+            "{:<3} {}| {}",
+            index.to_string().bold(),
+            "#".repeat(count / (max / 90 + 1)).dimmed().bold(),
+            if count == max {
+                count.to_string().green().bold()
+            } else {
+                count.to_string().bold()
+            },
+        ));
+    }
+
+    pub fn histogram_with_total<T: ToString>(index: T, count: usize, total: usize, max: usize) {
+        if count == 0 {
+            return;
+        }
+        Self::content(&format!(
+            "{:<125}{}",
+            &format!(
+                "{} {}| {:<5}",
+                index.to_string().bold(),
+                "#".repeat(count / (max / 80 + 1)).dimmed().bold(),
+                count.to_string().bold()
+            ),
+            format!("[{:<4} total]", total).bright_black()
+        ));
+    }
+
+    pub fn display_count_and_total(item: &String, count: usize, total: usize) {
+        View::content(&format!(
+            "- {:<50} {:<6}{}",
+            item.green().bold(),
+            count,
+            format!("[{:<4} total]", total,).bright_black()
+        ));
+    }
+
+    pub fn hint_finish(year: i32) {
+        Self::sub_title(&format!("All {} command line stats wrapped!", year));
+
+        Self::typewriter_for_line(
+            &("Specify other years with arguments, such as `./cmd-wrapped 2022`\n\n".to_string()
+                + &format!(
+                    "If you enjoy this open-source CLI, give it a star:  {}",
+                    "https://github.com/YiNNx/cmd-wrapped\n\n"
+                        .bold()
+                        .to_string()
+                        + "Also feel free to submit ideas or issues! :-D"
+                )),
+        );
     }
 }
