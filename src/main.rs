@@ -6,7 +6,7 @@ mod view;
 use std::env;
 
 use chrono::{Datelike, Local};
-use clap::{arg, command, Arg};
+use clap::{arg, command, value_parser, Arg};
 
 use history::{History, Shell};
 use parser::CommandParser;
@@ -26,7 +26,9 @@ impl Cli {
 
     pub fn new() -> Self {
         let args = command!()
-            .arg(Arg::new("year").required(false))
+            .arg(Arg::new("year")
+            .required(false)
+            .value_parser(value_parser!(i32)))
             .arg(
                 arg!(
                 -s --shell <SHELL> "Set the shell path manually"
