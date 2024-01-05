@@ -31,6 +31,8 @@
    cargo run
    # or for any specific year
    cargo run -- 2022
+   # or for any specific (supported) shell # bash or zsh now
+   cargo run -- -s zsh
    ```
 
 2. Download from [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest), unzip and run the binary file in the terminal:
@@ -40,6 +42,8 @@
    ./cmd-wrapped
    # or for any specific year
    ./cmd-wrapped 2022
+   # or for any specific (supported) shell # bash or zsh now
+   ./cmd-wrapped -s zsh
    ```
 
 > [!NOTE]

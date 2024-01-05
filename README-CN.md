@@ -31,6 +31,8 @@
    cargo run
    # 查看指定年份
    cargo run -- 2022
+   # 查看指定 shell
+   cargo run -- -s zsh
    ```
 
 2. 从 [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest) 中下载对应包并解压，在命令行中运行:
@@ -40,6 +42,8 @@
    ./cmd-wrapped
    # 查看指定年份
    ./cmd-wrapped 2022
+   # 查看指定 shell
+   ./cmd-wrapped -s zsh
    ```
 
 > [!NOTE]
