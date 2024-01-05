@@ -28,6 +28,7 @@ pub struct Statistic {
 }
 
 impl Statistic {
+    #[deprecated]
     pub fn new() -> Statistic {
         let now = Local::now();
         let mut year = now.year();
@@ -40,6 +41,19 @@ impl Statistic {
                 year = year_arg;
             }
         }
+        Statistic {
+            year,
+            first_command_time: Local::now(),
+            list_daytime: vec![0; 24],
+            list_weekday: vec![0; 7],
+            list_month: vec![0; 12],
+            list_month_total: vec![0; 12],
+            list_day: vec![0; 365],
+            ..Default::default()
+        }
+    }
+
+    pub fn from(year: i32) -> Statistic {
         Statistic {
             year,
             first_command_time: Local::now(),

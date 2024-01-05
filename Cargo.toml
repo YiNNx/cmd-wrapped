@@ -1,6 +1,6 @@
 [package]
 name = "cmd-wrapped"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,3 +11,4 @@ regex = "1.5"
 lazy_static = "1.4.0"
 colored = "2.1.0"
 num-traits = "0.2.17"
+clap = { version = "4.4.13", features = ["cargo"]}
