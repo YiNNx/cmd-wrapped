@@ -17,8 +17,8 @@
 
 - 生成过去一年中的命令行活跃分布，如每日最活跃时段，以及常用命令统计。
 - 类 Github 的年度命令分布图
-- 支持 Zsh & Bash，可通过参数显示过去任意一年的数据。
-- 封面的可爱 Ferris<img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
+- 支持 Zsh & Bash
+- 封面的 Ferris <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
 ## 如何运行
 
@@ -31,7 +31,7 @@
    cargo run
    # 查看指定年份
    cargo run -- 2022
-   # 查看指定 shell
+   # 指定 shell [zsh/bash]
    cargo run -- -s zsh
    ```
 
@@ -42,8 +42,6 @@
    ./cmd-wrapped
    # 查看指定年份
    ./cmd-wrapped 2022
-   # 查看指定 shell
-   ./cmd-wrapped -s zsh
    ```
 
 > [!NOTE]

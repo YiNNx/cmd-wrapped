@@ -13,11 +13,12 @@
 </div>
 
 
+
 ## Features
 
-- Analyze the command-line activity distribution for months, weekdays and hours, as well as frequently used commands over the past year.
+- Analyze the commandline activity distribution for months, weekdays and hours, as well as frequently-used commands over the past years.
 - Github-style command distribution graph
-- Supports both Zsh and Bash, and you can also specify other years with argumemt.
+- Supports both Zsh & Bash
 - A cute Ferris on the cover  <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
 ## How to Use
@@ -31,7 +32,7 @@
    cargo run
    # or for any specific year
    cargo run -- 2022
-   # or for any specific (supported) shell # bash or zsh now
+   # specifying the shell [zsh/bash] 
    cargo run -- -s zsh
    ```
 
@@ -42,8 +43,6 @@
    ./cmd-wrapped
    # or for any specific year
    ./cmd-wrapped 2022
-   # or for any specific (supported) shell # bash or zsh now
-   ./cmd-wrapped -s zsh
    ```
 
 > [!NOTE]
