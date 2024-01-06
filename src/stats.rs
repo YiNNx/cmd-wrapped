@@ -1,6 +1,6 @@
 use chrono::{DateTime, Datelike, Local, NaiveDate, Timelike};
 use num_traits::cast::FromPrimitive;
-use std::{collections::HashMap, env};
+use std::collections::HashMap;
 
 use crate::{
     parser::Command,
@@ -28,31 +28,6 @@ pub struct Statistic {
 }
 
 impl Statistic {
-    #[deprecated]
-    pub fn new() -> Statistic {
-        let now = Local::now();
-        let mut year = now.year();
-        if now.month() <= 3 {
-            year -= 1;
-        }
-        let args: Vec<String> = env::args().collect();
-        if args.len() == 2 {
-            if let Ok(year_arg) = args[1].parse::<i32>() {
-                year = year_arg;
-            }
-        }
-        Statistic {
-            year,
-            first_command_time: Local::now(),
-            list_daytime: vec![0; 24],
-            list_weekday: vec![0; 7],
-            list_month: vec![0; 12],
-            list_month_total: vec![0; 12],
-            list_day: vec![0; 365],
-            ..Default::default()
-        }
-    }
-
     pub fn from(year: i32) -> Statistic {
         Statistic {
             year,
