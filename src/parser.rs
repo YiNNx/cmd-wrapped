@@ -81,6 +81,7 @@ impl CommandParser {
                 .as_str(),
             captures
                 .get(3)
+                .filter(|s| !s.is_empty())
                 .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
                 .as_str(),
         );
@@ -106,6 +107,7 @@ impl CommandParser {
                 .as_str(),
             captures
                 .get(2)
+                .filter(|s| !s.is_empty())
                 .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
                 .as_str()
                 .to_string(),
