@@ -8,8 +8,8 @@ use std::{
 use crate::history::Shell;
 
 lazy_static::lazy_static! {
-    static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.*)").unwrap();
-    static ref RE_BASH_HISTORY: Regex = Regex::new(r"(\d+)\n((?:[^#\n]|\n)*)").unwrap();
+    static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.+)").unwrap();
+    static ref RE_BASH_HISTORY: Regex = Regex::new(r"(\d+)\n((?:[^#\n]|\n)+)").unwrap();
     static ref RE_COMMAND: Regex = Regex::new(r"(?:\|\||&&)").expect("Invalid regex");
 }
 
@@ -81,7 +81,6 @@ impl CommandParser {
                 .as_str(),
             captures
                 .get(3)
-                .filter(|s| !s.is_empty())
                 .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
                 .as_str(),
         );
@@ -107,7 +106,6 @@ impl CommandParser {
                 .as_str(),
             captures
                 .get(2)
-                .filter(|s| !s.is_empty())
                 .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
                 .as_str()
                 .to_string(),
