@@ -87,7 +87,10 @@ impl CommandParser {
         let time = Some(DateTime::<Local>::from(
             UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
         ));
-        let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
+        let commands_raw_splitted: Vec<_> = RE_COMMAND
+            .split(commands_raw)
+            .filter(|s| !s.is_empty())
+            .collect();
         for commandline in commands_raw_splitted {
             self.commands
                 .push(Command::from(commandline.into(), time).parse_line()?);
@@ -120,7 +123,10 @@ impl CommandParser {
             }
         };
         for commands_raw in commands_raw_list.lines() {
-            let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
+            let commands_raw_splitted: Vec<_> = RE_COMMAND
+                .split(commands_raw)
+                .filter(|s| !s.is_empty())
+                .collect();
             for commandline in commands_raw_splitted {
                 self.commands
                     .push(Command::from(commandline.into(), time).parse_line()?);
