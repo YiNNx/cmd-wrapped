@@ -2,7 +2,8 @@ use std::{
     env,
     error::Error,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{self, BufRead, BufReader, Read},
+    process::{Command, Stdio},
 };
 
 use crate::view::View;
@@ -11,6 +12,7 @@ use crate::view::View;
 pub enum Shell {
     Zsh,
     Bash,
+    Atuin,
     // Fish,
 }
 
@@ -29,6 +31,7 @@ impl Shell {
                 View::wait();
                 Self::Bash
             }
+            "atuin" => Self::Atuin,
             // "fish" => Self::Fish,
             _ => {
                 View::content(&format!(
@@ -40,20 +43,33 @@ impl Shell {
         }
     }
 
-    pub fn history_file_path(&self) -> Result<String, Box<dyn Error>> {
+    pub fn history(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
         Ok(match self {
             Shell::Zsh => {
-                env::var("HISTFILE").unwrap_or(format!("{}/.zsh_history", env::var("HOME")?))
+                let path =
+                    env::var("HISTFILE").unwrap_or(format!("{}/.zsh_history", env::var("HOME")?));
+                Box::new(File::open(path)?)
             }
             Shell::Bash => {
-                env::var("HISTFILE").unwrap_or(format!("{}/.bash_history", env::var("HOME")?))
+                let path =
+                    env::var("HISTFILE").unwrap_or(format!("{}/.bash_history", env::var("HOME")?));
+                Box::new(File::open(path)?)
+            }
+            Shell::Atuin => {
+                let stdout = Command::new("atuin")
+                    .args(["history", "list", "--format", "{time} {command}"])
+                    .stdout(Stdio::piped())
+                    .spawn()?
+                    .stdout
+                    .ok_or(io::Error::new(io::ErrorKind::Other, "Failed to get stdout"))?;
+                Box::new(stdout)
             }
         })
     }
 }
 
 pub struct History {
-    buff_reader: BufReader<File>,
+    buff_reader: BufReader<Box<dyn Read>>,
     shell_type: Shell,
 }
 
@@ -61,7 +77,7 @@ impl History {
     pub fn from(shell: &Shell) -> Result<Self, Box<dyn Error>> {
         Ok(History {
             shell_type: shell.clone(),
-            buff_reader: BufReader::new(File::open(shell.history_file_path()?)?),
+            buff_reader: BufReader::new(shell.history()?),
         })
     }
 }
@@ -71,7 +87,7 @@ impl Iterator for History {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.shell_type {
-            Shell::Zsh => {
+            Shell::Zsh | Shell::Atuin => {
                 let mut ended = false;
                 let mut line = String::new();
                 while !ended {

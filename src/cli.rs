@@ -32,7 +32,7 @@ impl Cli {
             )
             .arg(
                 arg!(
-                -s --shell <SHELL> "Set the shell path manually"
+                -s --shell <SHELL> "Specify the shell or shell history tool"
                 )
                 .required(false),
             )
