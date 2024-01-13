@@ -2,7 +2,8 @@ use std::{
     env,
     error::Error,
     fs::File,
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Cursor, Read},
+    process::Command,
 };
 
 use crate::view::View;
@@ -11,7 +12,7 @@ use crate::view::View;
 pub enum Shell {
     Zsh,
     Bash,
-    // Fish,
+    Fish,
 }
 
 impl Shell {
@@ -29,7 +30,7 @@ impl Shell {
                 View::wait();
                 Self::Bash
             }
-            // "fish" => Self::Fish,
+            "fish" => Self::Fish,
             _ => {
                 View::content(&format!(
                     "Sorry, {} is not supported yet\n\n",
@@ -40,20 +41,30 @@ impl Shell {
         }
     }
 
-    pub fn history_file_path(&self) -> Result<String, Box<dyn Error>> {
-        Ok(match self {
-            Shell::Zsh => {
-                env::var("HISTFILE").unwrap_or(format!("{}/.zsh_history", env::var("HOME")?))
+    pub fn history_stream(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
+        let file_path = match self {
+            Shell::Zsh | Shell::Bash => {
+                let shell_name = match self {
+                    Shell::Zsh => ".zsh_history",
+                    Shell::Bash => ".bash_history",
+                    _ => unreachable!(),
+                };
+                format!("{}/{}", env::var("HOME")?, shell_name)
             }
-            Shell::Bash => {
-                env::var("HISTFILE").unwrap_or(format!("{}/.bash_history", env::var("HOME")?))
+            Shell::Fish => {
+                let output = Command::new("fish")
+                    .arg("-c")
+                    .arg("history -show-time='%s# '")
+                    .output()?;
+                return Ok(Box::new(Cursor::new(output.stdout)));
             }
-        })
+        };
+        Ok(Box::new(File::open(file_path)?))
     }
 }
 
 pub struct History {
-    buff_reader: BufReader<File>,
+    buff_reader: BufReader<Box<dyn Read>>,
     shell_type: Shell,
 }
 
@@ -61,7 +72,7 @@ impl History {
     pub fn from(shell: &Shell) -> Result<Self, Box<dyn Error>> {
         Ok(History {
             shell_type: shell.clone(),
-            buff_reader: BufReader::new(File::open(shell.history_file_path()?)?),
+            buff_reader: BufReader::new(shell.history_stream()?),
         })
     }
 }
@@ -96,6 +107,22 @@ impl Iterator for History {
                 }
                 let str = String::from_utf8_lossy(&buf).into_owned();
                 Some(str.strip_suffix("#").unwrap_or(&str).trim().into())
+            }
+            Shell::Fish => {
+                let mut buf = vec![];
+
+                loop {
+                    self.buff_reader.read_until(b'\n', &mut buf).unwrap();
+                    if buf.is_empty() {
+                        return None;
+                    }
+                    let str = String::from_utf8_lossy(&buf).trim().to_owned();
+                    if str.is_empty() {
+                        buf.clear();
+                        continue;
+                    }
+                    break Some(str);
+                }
             }
         }
     }
