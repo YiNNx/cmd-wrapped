@@ -44,16 +44,15 @@ impl Shell {
     }
 
     pub fn history(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
-        Ok(match self {
-            Shell::Zsh => {
-                let path =
-                    env::var("HISTFILE").unwrap_or(format!("{}/.zsh_history", env::var("HOME")?));
-                Box::new(File::open(path)?)
-            }
-            Shell::Bash => {
-                let path =
-                    env::var("HISTFILE").unwrap_or(format!("{}/.bash_history", env::var("HOME")?));
-                Box::new(File::open(path)?)
+        match self {
+            Shell::Zsh | Shell::Bash => {
+                let shell_name = match self {
+                    Shell::Zsh => ".zsh_history",
+                    Shell::Bash => ".bash_history",
+                    _ => unreachable!(),
+                };
+                let file_path = format!("{}/{}", env::var("HOME")?, shell_name);
+                Ok(Box::new(File::open(file_path)?))
             }
             Shell::Atuin => {
                 let stdout = Command::new("atuin")
@@ -62,9 +61,9 @@ impl Shell {
                     .spawn()?
                     .stdout
                     .ok_or(io::Error::new(io::ErrorKind::Other, "Failed to get stdout"))?;
-                Box::new(stdout)
+                Ok(Box::new(stdout))
             }
-        })
+        }
     }
 }
 

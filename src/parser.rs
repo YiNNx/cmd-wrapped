@@ -145,7 +145,7 @@ impl CommandParser {
 
         let time = Local
             .with_ymd_and_hms(year, month, day, hour, min, sec)
-            .latest(); // FIXME
+            .single();
 
         let command = captures
             .name("cmd")
