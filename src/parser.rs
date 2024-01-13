@@ -41,8 +41,8 @@ impl Command {
         let c = args
             .clone()
             .into_iter()
-            .find(|s| !s.contains('=') && !s.contains('{'))
-            .unwrap_or("".into());
+            .find(|s| !s.contains('=') && !s.contains('{') && !s.is_empty())
+            .ok_or_else(|| "invalid command")?;
         self.command = c;
         self.arguments = args;
         Ok(self)
