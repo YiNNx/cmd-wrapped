@@ -9,14 +9,14 @@ use std::{
 use crate::view::View;
 
 #[derive(Debug, Clone)]
-pub enum Shell {
+pub enum HistoryProvider {
     Zsh,
     Bash,
     Atuin,
     // Fish,
 }
 
-impl Shell {
+impl HistoryProvider {
     pub fn from(shell: &String) -> Self {
         match shell.as_str() {
             "zsh" => Self::Zsh,
@@ -45,16 +45,16 @@ impl Shell {
 
     pub fn history(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
         match self {
-            Shell::Zsh | Shell::Bash => {
+            HistoryProvider::Zsh | HistoryProvider::Bash => {
                 let history_file_name = match self {
-                    Shell::Zsh => ".zsh_history",
-                    Shell::Bash => ".bash_history",
+                    HistoryProvider::Zsh => ".zsh_history",
+                    HistoryProvider::Bash => ".bash_history",
                     _ => unreachable!(),
                 };
                 let file_path = format!("{}/{}", env::var("HOME")?, history_file_name);
                 Ok(Box::new(File::open(file_path)?))
             }
-            Shell::Atuin => {
+            HistoryProvider::Atuin => {
                 let stdout = Command::new("atuin")
                     .args(["history", "list", "--format", "{time};{command}"])
                     .stdout(Stdio::piped())
@@ -69,11 +69,11 @@ impl Shell {
 
 pub struct History {
     buff_reader: BufReader<Box<dyn Read>>,
-    shell_type: Shell,
+    shell_type: HistoryProvider,
 }
 
 impl History {
-    pub fn from(shell: &Shell) -> Result<Self, Box<dyn Error>> {
+    pub fn from(shell: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
         Ok(History {
             shell_type: shell.clone(),
             buff_reader: BufReader::new(shell.history()?),
@@ -86,7 +86,7 @@ impl Iterator for History {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.shell_type {
-            Shell::Zsh | Shell::Atuin => {
+            HistoryProvider::Zsh | HistoryProvider::Atuin => {
                 let mut ended = false;
                 let mut line = String::new();
                 while !ended {
@@ -103,7 +103,7 @@ impl Iterator for History {
                 }
                 Some(line.trim().into())
             }
-            Shell::Bash => {
+            HistoryProvider::Bash => {
                 let mut buf = vec![];
                 self.buff_reader.read_until(b'#', &mut buf).ok()?;
                 if buf.is_empty() {

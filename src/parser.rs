@@ -5,7 +5,7 @@ use std::{
     time::{Duration, UNIX_EPOCH},
 };
 
-use crate::history::Shell;
+use crate::history::HistoryProvider;
 
 lazy_static::lazy_static! {
     static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.*)").unwrap();
@@ -63,11 +63,11 @@ impl CommandParser {
         }
     }
 
-    pub fn parse(self, shell: &Shell) -> Result<Self, Box<dyn Error>> {
+    pub fn parse(self, shell: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
         match shell {
-            Shell::Zsh => self.parse_zsh(),
-            Shell::Bash => self.parse_bash(),
-            Shell::Atuin => self.parse_atuin(),
+            HistoryProvider::Zsh => self.parse_zsh(),
+            HistoryProvider::Bash => self.parse_bash(),
+            HistoryProvider::Atuin => self.parse_atuin(),
         }
     }
 
