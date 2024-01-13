@@ -2,8 +2,8 @@ use std::{
     env,
     error::Error,
     fs::File,
-    io::{self, BufRead, BufReader, Cursor, Read},
-    process::{Command, Stdio},
+    io::{BufRead, BufReader, Cursor, Read},
+    process::Command,
 };
 
 use crate::view::View;
@@ -55,18 +55,15 @@ impl HistoryProvider {
                 Ok(Box::new(File::open(file_path)?))
             }
             HistoryProvider::Atuin => {
-                let stdout = Command::new("atuin")
+                let output = Command::new("atuin")
                     .args(["history", "list", "--format", "{time};{command}"])
-                    .stdout(Stdio::piped())
-                    .spawn()?
-                    .stdout
-                    .ok_or(io::Error::new(io::ErrorKind::Other, "Failed to get stdout"))?;
-                Ok(Box::new(stdout))
+                    .output()?;
+                Ok(Box::new(Cursor::new(output.stdout)))
             }
             HistoryProvider::Fish => {
                 let output = Command::new("fish")
                     .arg("-c")
-                    .arg("history -show-time='%s# '")
+                    .arg("history -show-time='%s;'")
                     .output()?;
                 Ok(Box::new(Cursor::new(output.stdout)))
             }
@@ -93,46 +90,43 @@ impl Iterator for History {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.shell_type {
-            HistoryProvider::Zsh | HistoryProvider::Atuin => {
-                let mut ended = false;
-                let mut line = String::new();
-                while !ended {
-                    let mut buf = vec![];
-                    self.buff_reader.read_until(b'\n', &mut buf).ok()?;
+            HistoryProvider::Zsh | HistoryProvider::Atuin | HistoryProvider::Fish => {
+                let mut block = String::new();
+                let mut buf = vec![];
+                loop {
+                    self.buff_reader.read_until(b'\n', &mut buf).unwrap();
                     if buf.is_empty() {
-                        return if line.is_empty() { None } else { Some(line) };
+                        return if block.is_empty() { None } else { Some(block) };
                     }
-                    line += String::from_utf8_lossy(&buf).into_owned().trim();
-                    ended = !line.ends_with('\\');
-                    if !ended {
-                        line = line.strip_suffix('\\')?.into();
+                    let str = String::from_utf8_lossy(&buf).trim().to_owned();
+                    block += &str;
+                    if str.is_empty() {
+                        buf.clear();
+                        continue;
                     }
+                    if str.ends_with('\\') {
+                        block = block.strip_suffix('\\')?.into();
+                        buf.clear();
+                        continue;
+                    }
+                    break Some(block);
                 }
-                Some(line.trim().into())
             }
             HistoryProvider::Bash => {
+                let mut block = String::new();
                 let mut buf = vec![];
-                self.buff_reader.read_until(b'#', &mut buf).ok()?;
-                if buf.is_empty() {
-                    return None;
-                }
-                let str = String::from_utf8_lossy(&buf).into_owned();
-                Some(str.strip_suffix("#").unwrap_or(&str).trim().into())
-            }
-            HistoryProvider::Fish => {
-                let mut buf = vec![];
-
                 loop {
                     self.buff_reader.read_until(b'\n', &mut buf).unwrap();
                     if buf.is_empty() {
                         return None;
                     }
-                    let str = String::from_utf8_lossy(&buf).trim().to_owned();
-                    if str.is_empty() {
+                    let str = String::from_utf8_lossy(&buf).to_owned();
+                    block += &str;
+                    if str.starts_with('#') {
                         buf.clear();
                         continue;
                     }
-                    break Some(str);
+                    break Some(block.trim().into());
                 }
             }
         }

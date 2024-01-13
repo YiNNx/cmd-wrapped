@@ -9,9 +9,8 @@ use crate::history::HistoryProvider;
 
 lazy_static::lazy_static! {
     static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.+)").unwrap();
-    static ref RE_BASH_HISTORY: Regex = Regex::new(r"(\d+)\n((?:[^#\n]|\n)+)").unwrap();
-    static ref RE_FISH_HISTORY: Regex = Regex::new(r"(\d+)#\s(.*)").unwrap();
-    static ref RE_COMMAND: Regex = Regex::new(r"(?:\|\||&&)").expect("Invalid regex");
+    static ref RE_BASH_HISTORY: Regex = Regex::new(r"#(.*)\n(.+)").unwrap();
+    static ref RE_COMMAND: Regex = Regex::new(r"(?:\||&&)").unwrap();
 }
 
 #[derive(Debug, Default)]
@@ -21,7 +20,6 @@ pub struct Command {
 
     pub command: String,
     pub arguments: Vec<String>,
-    // files: Vec<String>,
 }
 
 impl Command {
@@ -34,17 +32,19 @@ impl Command {
     }
 
     fn parse_line(mut self) -> Result<Self, Box<dyn Error>> {
+        if self.commandline.is_empty() || self.commandline.starts_with('#') {
+            return Ok(self);
+        }
         let command = self
             .commandline
             .strip_prefix("sudo")
             .unwrap_or(&self.commandline);
         let args: Vec<_> = command.split_whitespace().map(String::from).collect();
         let c = args
-            .clone()
-            .into_iter()
+            .iter()
             .find(|s| !s.contains('=') && !s.contains('{') && !s.is_empty())
             .ok_or_else(|| "invalid command")?;
-        self.command = c;
+        self.command = c.to_owned();
         self.arguments = args;
         Ok(self)
     }
@@ -64,89 +64,56 @@ impl CommandParser {
         }
     }
 
-    pub fn parse(self, shell: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
-        match shell {
-            HistoryProvider::Zsh => self.parse_zsh(),
-            HistoryProvider::Bash => self.parse_bash(),
-            HistoryProvider::Atuin => self.parse_atuin(),
-            HistoryProvider::Fish => self.parse_fish(),
+    pub fn parse(mut self, shell: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
+        let (commands_combined, time) = match shell {
+            HistoryProvider::Zsh => self.parse_zsh_raw(),
+            HistoryProvider::Bash => self.parse_bash_raw(),
+            HistoryProvider::Atuin => self.parse_atuin_raw(),
+            HistoryProvider::Fish => self.parse_fish_raw(),
+        }?;
+        let commands_splitted = RE_COMMAND.split(&commands_combined);
+        for commandline in commands_splitted {
+            self.commands
+                .push(Command::from(commandline.into(), time).parse_line()?);
         }
+        Ok(self)
     }
 
-    pub fn parse_zsh(mut self) -> Result<Self, Box<dyn Error>> {
+    pub fn parse_zsh_raw(&self) -> Result<(String, Option<DateTime<Local>>), Box<dyn Error>> {
         let captures = Re::captures(&RE_ZSH_HISTORY, &self.raw)?;
         let (timestamp, commands_raw) = (
             Re::get(&captures, 1)?.as_str(),
-            Re::get(&captures, 3)?.as_str(),
+            Re::get(&captures, 3)?.as_str().to_string(),
         );
         let time = Some(DateTime::<Local>::from(
             UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
         ));
-        let commands_raw_splitted: Vec<_> = RE_COMMAND
-            .split(commands_raw)
-            .filter(|s| !s.is_empty())
-            .collect();
-        for commandline in commands_raw_splitted {
-            self.commands
-                .push(Command::from(commandline.into(), time).parse_line()?);
-        }
-        Ok(self)
+        Ok((commands_raw, time))
     }
 
-    pub fn parse_bash(mut self) -> Result<Self, Box<dyn Error>> {
+    pub fn parse_bash_raw(&self) -> Result<(String, Option<DateTime<Local>>), Box<dyn Error>> {
+        if !&self.raw.starts_with('#') {
+            return Ok((self.raw.clone(), None));
+        }
         let captures = Re::captures(&RE_BASH_HISTORY, &self.raw)?;
-        let (start_line, mut commands_raw_list) = (
+        let (timestamp, commands_raw) = (
             Re::get(&captures, 1)?.as_str(),
             Re::get(&captures, 2)?.as_str().to_string(),
         );
-        let time = match start_line.parse::<u64>() {
-            Ok(timestamp) => Some(DateTime::<Local>::from(
-                UNIX_EPOCH + Duration::from_secs(timestamp),
-            )),
-            Err(_) => {
-                commands_raw_list += start_line;
-                None
-            }
-        };
-        for commands_raw in commands_raw_list.lines() {
-            let commands_raw_splitted: Vec<_> = RE_COMMAND
-                .split(commands_raw)
-                .filter(|s| !s.is_empty())
-                .collect();
-            for commandline in commands_raw_splitted {
-                self.commands
-                    .push(Command::from(commandline.into(), time).parse_line()?);
-            }
-        }
-        Ok(self)
-    }
-
-    pub fn parse_fish(mut self) -> Result<Self, Box<dyn Error>> {
-        let captures = RE_FISH_HISTORY
-            .captures(&self.raw)
-            .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?;
-        let (timestamp, commands_raw) = (
-            captures
-                .get(1)
-                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
-                .as_str(),
-            captures
-                .get(2)
-                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
-                .as_str(),
-        );
         let time = Some(DateTime::<Local>::from(
             UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
         ));
-        let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
-        for commandline in commands_raw_splitted {
-            self.commands
-                .push(Command::from(commandline.into(), time).parse_line()?);
-        }
-        Ok(self)
+        Ok((
+            commands_raw
+                .lines()
+                .find(|item| !item.starts_with('#'))
+                .ok_or_else(|| "empty command found")?
+                .into(),
+            time,
+        ))
     }
 
-    pub fn parse_atuin(mut self) -> Result<Self, Box<dyn Error>> {
+    pub fn parse_atuin_raw(&self) -> Result<(String, Option<DateTime<Local>>), Box<dyn Error>> {
         let (time_raw, commands_raw) = self
             .raw
             .split_once(';')
@@ -156,12 +123,19 @@ impl CommandParser {
             .ok()
             .and_then(|naive_time| Local.from_local_datetime(&naive_time).single());
 
-        let command_raw_splited = RE_COMMAND.split(commands_raw);
-        for commandline in command_raw_splited {
-            self.commands
-                .push(Command::from(commandline.into(), time).parse_line()?);
-        }
-        Ok(self)
+        Ok((commands_raw.into(), time))
+    }
+
+    pub fn parse_fish_raw(&self) -> Result<(String, Option<DateTime<Local>>), Box<dyn Error>> {
+        let (timestamp, commands_raw) = self
+            .raw
+            .split_once(';')
+            .ok_or_else(|| "failed to split atuin command")?;
+
+        let time = Some(DateTime::<Local>::from(
+            UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
+        ));
+        Ok((commands_raw.into(), time))
     }
 
     pub fn finish(self) -> Vec<Command> {
@@ -181,6 +155,6 @@ impl Re {
     fn get<'a>(captures: &Captures<'a>, index: usize) -> Result<Match<'a>, Box<dyn Error>> {
         Ok(captures
             .get(index)
-            .ok_or_else(|| format!("failed to get from re capture"))?)
+            .ok_or_else(|| format!("failed to get match from re capture"))?)
     }
 }
