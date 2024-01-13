@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, Local, NaiveDateTime, TimeZone};
 use regex::{Captures, Match, Regex};
 use std::{
     error::Error,
@@ -10,7 +10,6 @@ use crate::history::Shell;
 lazy_static::lazy_static! {
     static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.*)").unwrap();
     static ref RE_BASH_HISTORY: Regex = Regex::new(r"(\d+)\n((?:[^#\n]|\n)*)").unwrap();
-    static ref RE_AUTIN_HISTORY: Regex = Regex::new(r"(?P<y>\d+)-(?P<m>\d+)-(?P<d>\d+) (?P<H>\d+):(?P<M>\d+):(?P<S>\d+) (?P<cmd>.+)").unwrap();
     static ref RE_COMMAND: Regex = Regex::new(r"(?:\|\||&&)").expect("Invalid regex");
 }
 
@@ -115,26 +114,16 @@ impl CommandParser {
     }
 
     pub fn parse_atuin(mut self) -> Result<Self, Box<dyn Error>> {
-        let captures = Re::captures(&RE_AUTIN_HISTORY, &self.raw)?;
+        let (time_raw, commands_raw) = self
+            .raw
+            .split_once(';')
+            .ok_or_else(|| "failed to split atuin command")?;
 
-        let year = captures.name("y").unwrap().as_str().parse::<i32>()?;
-        let month = captures.name("m").unwrap().as_str().parse::<u32>()?;
-        let day = captures.name("d").unwrap().as_str().parse::<u32>()?;
-        let hour = captures.name("H").unwrap().as_str().parse::<u32>()?;
-        let min = captures.name("M").unwrap().as_str().parse::<u32>()?;
-        let sec = captures.name("S").unwrap().as_str().parse::<u32>()?;
+        let time = NaiveDateTime::parse_from_str(time_raw, "%Y-%m-%d %H:%M:%S")
+            .ok()
+            .and_then(|naive_time| Local.from_local_datetime(&naive_time).single());
 
-        let time = Local
-            .with_ymd_and_hms(year, month, day, hour, min, sec)
-            .single();
-
-        let command = captures
-            .name("cmd")
-            .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
-            .as_str();
-
-        let command_raw_splited = RE_COMMAND.split(command);
-
+        let command_raw_splited = RE_COMMAND.split(commands_raw);
         for commandline in command_raw_splited {
             self.commands
                 .push(Command::from(commandline.into(), time).parse_line()?);

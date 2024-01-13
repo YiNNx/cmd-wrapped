@@ -46,17 +46,17 @@ impl Shell {
     pub fn history(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
         match self {
             Shell::Zsh | Shell::Bash => {
-                let shell_name = match self {
+                let history_file_name = match self {
                     Shell::Zsh => ".zsh_history",
                     Shell::Bash => ".bash_history",
                     _ => unreachable!(),
                 };
-                let file_path = format!("{}/{}", env::var("HOME")?, shell_name);
+                let file_path = format!("{}/{}", env::var("HOME")?, history_file_name);
                 Ok(Box::new(File::open(file_path)?))
             }
             Shell::Atuin => {
                 let stdout = Command::new("atuin")
-                    .args(["history", "list", "--format", "{time} {command}"])
+                    .args(["history", "list", "--format", "{time};{command}"])
                     .stdout(Stdio::piped())
                     .spawn()?
                     .stdout
