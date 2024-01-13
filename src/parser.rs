@@ -1,5 +1,5 @@
 use chrono::{DateTime, Local, TimeZone};
-use regex::Regex;
+use regex::{Captures, Match, Regex};
 use std::{
     error::Error,
     time::{Duration, UNIX_EPOCH},
@@ -73,18 +73,10 @@ impl CommandParser {
     }
 
     pub fn parse_zsh(mut self) -> Result<Self, Box<dyn Error>> {
-        let captures = RE_ZSH_HISTORY
-            .captures(&self.raw)
-            .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?;
+        let captures = Re::captures(&RE_ZSH_HISTORY, &self.raw)?;
         let (timestamp, commands_raw) = (
-            captures
-                .get(1)
-                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
-                .as_str(),
-            captures
-                .get(3)
-                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
-                .as_str(),
+            Re::get(&captures, 1)?.as_str(),
+            Re::get(&captures, 3)?.as_str(),
         );
         let time = Some(DateTime::<Local>::from(
             UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
@@ -98,19 +90,10 @@ impl CommandParser {
     }
 
     pub fn parse_bash(mut self) -> Result<Self, Box<dyn Error>> {
-        let captures = RE_BASH_HISTORY
-            .captures(&self.raw)
-            .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?;
+        let captures = Re::captures(&RE_BASH_HISTORY, &self.raw)?;
         let (start_line, mut commands_raw_list) = (
-            captures
-                .get(1)
-                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
-                .as_str(),
-            captures
-                .get(2)
-                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
-                .as_str()
-                .to_string(),
+            Re::get(&captures, 1)?.as_str(),
+            Re::get(&captures, 2)?.as_str().to_string(),
         );
         let time = match start_line.parse::<u64>() {
             Ok(timestamp) => Some(DateTime::<Local>::from(
@@ -132,9 +115,7 @@ impl CommandParser {
     }
 
     pub fn parse_atuin(mut self) -> Result<Self, Box<dyn Error>> {
-        let captures = RE_AUTIN_HISTORY
-            .captures(&self.raw)
-            .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?;
+        let captures = Re::captures(&RE_AUTIN_HISTORY, &self.raw)?;
 
         let year = captures.name("y").unwrap().as_str().parse::<i32>()?;
         let month = captures.name("m").unwrap().as_str().parse::<u32>()?;
@@ -163,5 +144,21 @@ impl CommandParser {
 
     pub fn finish(self) -> Vec<Command> {
         self.commands
+    }
+}
+
+struct Re;
+
+impl Re {
+    fn captures<'a>(re: &Regex, s: &'a str) -> Result<Captures<'a>, Box<dyn Error>> {
+        Ok(re
+            .captures(s)
+            .ok_or_else(|| format!("incomplete match found: {}", s))?)
+    }
+
+    fn get<'a>(captures: &Captures<'a>, index: usize) -> Result<Match<'a>, Box<dyn Error>> {
+        Ok(captures
+            .get(index)
+            .ok_or_else(|| format!("failed to get from re capture"))?)
     }
 }
