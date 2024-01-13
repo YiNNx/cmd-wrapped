@@ -8,8 +8,8 @@ use std::{
 use crate::history::Shell;
 
 lazy_static::lazy_static! {
-    static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.*)").unwrap();
-    static ref RE_BASH_HISTORY: Regex = Regex::new(r"(\d+)\n((?:[^#\n]|\n)*)").unwrap();
+    static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.+)").unwrap();
+    static ref RE_BASH_HISTORY: Regex = Regex::new(r"(\d+)\n((?:[^#\n]|\n)+)").unwrap();
     static ref RE_COMMAND: Regex = Regex::new(r"(?:\|\||&&)").expect("Invalid regex");
 }
 
@@ -41,8 +41,8 @@ impl Command {
         let c = args
             .clone()
             .into_iter()
-            .find(|s| !s.contains('=') && !s.contains('{'))
-            .unwrap_or("".into());
+            .find(|s| !s.contains('=') && !s.contains('{') && !s.is_empty())
+            .ok_or_else(|| "invalid command")?;
         self.command = c;
         self.arguments = args;
         Ok(self)
@@ -87,7 +87,10 @@ impl CommandParser {
         let time = Some(DateTime::<Local>::from(
             UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
         ));
-        let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
+        let commands_raw_splitted: Vec<_> = RE_COMMAND
+            .split(commands_raw)
+            .filter(|s| !s.is_empty())
+            .collect();
         for commandline in commands_raw_splitted {
             self.commands
                 .push(Command::from(commandline.into(), time).parse_line()?);
@@ -120,7 +123,10 @@ impl CommandParser {
             }
         };
         for commands_raw in commands_raw_list.lines() {
-            let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
+            let commands_raw_splitted: Vec<_> = RE_COMMAND
+                .split(commands_raw)
+                .filter(|s| !s.is_empty())
+                .collect();
             for commandline in commands_raw_splitted {
                 self.commands
                     .push(Command::from(commandline.into(), time).parse_line()?);
