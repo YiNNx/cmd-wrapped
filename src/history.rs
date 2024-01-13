@@ -2,7 +2,7 @@ use std::{
     env,
     error::Error,
     fs::File,
-    io::{self, BufRead, BufReader, Read},
+    io::{self, BufRead, BufReader, Cursor, Read},
     process::{Command, Stdio},
 };
 
@@ -13,7 +13,7 @@ pub enum HistoryProvider {
     Zsh,
     Bash,
     Atuin,
-    // Fish,
+    Fish,
 }
 
 impl HistoryProvider {
@@ -32,7 +32,7 @@ impl HistoryProvider {
                 Self::Bash
             }
             "atuin" => Self::Atuin,
-            // "fish" => Self::Fish,
+            "fish" => Self::Fish,
             _ => {
                 View::content(&format!(
                     "Sorry, {} is not supported yet\n\n",
@@ -43,7 +43,7 @@ impl HistoryProvider {
         }
     }
 
-    pub fn history(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
+    pub fn history_stream(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
         match self {
             HistoryProvider::Zsh | HistoryProvider::Bash => {
                 let history_file_name = match self {
@@ -63,6 +63,13 @@ impl HistoryProvider {
                     .ok_or(io::Error::new(io::ErrorKind::Other, "Failed to get stdout"))?;
                 Ok(Box::new(stdout))
             }
+            HistoryProvider::Fish => {
+                let output = Command::new("fish")
+                    .arg("-c")
+                    .arg("history -show-time='%s# '")
+                    .output()?;
+                Ok(Box::new(Cursor::new(output.stdout)))
+            }
         }
     }
 }
@@ -76,7 +83,7 @@ impl History {
     pub fn from(shell: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
         Ok(History {
             shell_type: shell.clone(),
-            buff_reader: BufReader::new(shell.history()?),
+            buff_reader: BufReader::new(shell.history_stream()?),
         })
     }
 }
@@ -111,6 +118,22 @@ impl Iterator for History {
                 }
                 let str = String::from_utf8_lossy(&buf).into_owned();
                 Some(str.strip_suffix("#").unwrap_or(&str).trim().into())
+            }
+            HistoryProvider::Fish => {
+                let mut buf = vec![];
+
+                loop {
+                    self.buff_reader.read_until(b'\n', &mut buf).unwrap();
+                    if buf.is_empty() {
+                        return None;
+                    }
+                    let str = String::from_utf8_lossy(&buf).trim().to_owned();
+                    if str.is_empty() {
+                        buf.clear();
+                        continue;
+                    }
+                    break Some(str);
+                }
             }
         }
     }

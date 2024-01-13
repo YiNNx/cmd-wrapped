@@ -10,6 +10,7 @@ use crate::history::HistoryProvider;
 lazy_static::lazy_static! {
     static ref RE_ZSH_HISTORY: Regex = Regex::new(r": (\d+):(\d+);(.+)").unwrap();
     static ref RE_BASH_HISTORY: Regex = Regex::new(r"(\d+)\n((?:[^#\n]|\n)+)").unwrap();
+    static ref RE_FISH_HISTORY: Regex = Regex::new(r"(\d+)#\s(.*)").unwrap();
     static ref RE_COMMAND: Regex = Regex::new(r"(?:\|\||&&)").expect("Invalid regex");
 }
 
@@ -68,6 +69,7 @@ impl CommandParser {
             HistoryProvider::Zsh => self.parse_zsh(),
             HistoryProvider::Bash => self.parse_bash(),
             HistoryProvider::Atuin => self.parse_atuin(),
+            HistoryProvider::Fish => self.parse_fish(),
         }
     }
 
@@ -115,6 +117,31 @@ impl CommandParser {
                 self.commands
                     .push(Command::from(commandline.into(), time).parse_line()?);
             }
+        }
+        Ok(self)
+    }
+
+    pub fn parse_fish(mut self) -> Result<Self, Box<dyn Error>> {
+        let captures = RE_FISH_HISTORY
+            .captures(&self.raw)
+            .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?;
+        let (timestamp, commands_raw) = (
+            captures
+                .get(1)
+                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
+                .as_str(),
+            captures
+                .get(2)
+                .ok_or_else(|| format!("Incomplete match found: {}", self.raw))?
+                .as_str(),
+        );
+        let time = Some(DateTime::<Local>::from(
+            UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
+        ));
+        let commands_raw_splitted: Vec<_> = RE_COMMAND.split(commands_raw).collect();
+        for commandline in commands_raw_splitted {
+            self.commands
+                .push(Command::from(commandline.into(), time).parse_line()?);
         }
         Ok(self)
     }
