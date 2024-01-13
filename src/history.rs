@@ -2,20 +2,21 @@ use std::{
     env,
     error::Error,
     fs::File,
-    io::{BufRead, BufReader, Cursor, Read},
-    process::Command,
+    io::{self, BufRead, BufReader, Cursor, Read},
+    process::{Command, Stdio},
 };
 
 use crate::view::View;
 
 #[derive(Debug, Clone)]
-pub enum Shell {
+pub enum HistoryProvider {
     Zsh,
     Bash,
+    Atuin,
     Fish,
 }
 
-impl Shell {
+impl HistoryProvider {
     pub fn from(shell: &String) -> Self {
         match shell.as_str() {
             "zsh" => Self::Zsh,
@@ -30,6 +31,7 @@ impl Shell {
                 View::wait();
                 Self::Bash
             }
+            "atuin" => Self::Atuin,
             "fish" => Self::Fish,
             _ => {
                 View::content(&format!(
@@ -42,34 +44,43 @@ impl Shell {
     }
 
     pub fn history_stream(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
-        let file_path = match self {
-            Shell::Zsh | Shell::Bash => {
-                let shell_name = match self {
-                    Shell::Zsh => ".zsh_history",
-                    Shell::Bash => ".bash_history",
+        match self {
+            HistoryProvider::Zsh | HistoryProvider::Bash => {
+                let history_file_name = match self {
+                    HistoryProvider::Zsh => ".zsh_history",
+                    HistoryProvider::Bash => ".bash_history",
                     _ => unreachable!(),
                 };
-                format!("{}/{}", env::var("HOME")?, shell_name)
+                let file_path = format!("{}/{}", env::var("HOME")?, history_file_name);
+                Ok(Box::new(File::open(file_path)?))
             }
-            Shell::Fish => {
+            HistoryProvider::Atuin => {
+                let stdout = Command::new("atuin")
+                    .args(["history", "list", "--format", "{time};{command}"])
+                    .stdout(Stdio::piped())
+                    .spawn()?
+                    .stdout
+                    .ok_or(io::Error::new(io::ErrorKind::Other, "Failed to get stdout"))?;
+                Ok(Box::new(stdout))
+            }
+            HistoryProvider::Fish => {
                 let output = Command::new("fish")
                     .arg("-c")
                     .arg("history -show-time='%s# '")
                     .output()?;
-                return Ok(Box::new(Cursor::new(output.stdout)));
+                Ok(Box::new(Cursor::new(output.stdout)))
             }
-        };
-        Ok(Box::new(File::open(file_path)?))
+        }
     }
 }
 
 pub struct History {
     buff_reader: BufReader<Box<dyn Read>>,
-    shell_type: Shell,
+    shell_type: HistoryProvider,
 }
 
 impl History {
-    pub fn from(shell: &Shell) -> Result<Self, Box<dyn Error>> {
+    pub fn from(shell: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
         Ok(History {
             shell_type: shell.clone(),
             buff_reader: BufReader::new(shell.history_stream()?),
@@ -82,7 +93,7 @@ impl Iterator for History {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.shell_type {
-            Shell::Zsh => {
+            HistoryProvider::Zsh | HistoryProvider::Atuin => {
                 let mut ended = false;
                 let mut line = String::new();
                 while !ended {
@@ -99,7 +110,7 @@ impl Iterator for History {
                 }
                 Some(line.trim().into())
             }
-            Shell::Bash => {
+            HistoryProvider::Bash => {
                 let mut buf = vec![];
                 self.buff_reader.read_until(b'#', &mut buf).ok()?;
                 if buf.is_empty() {
@@ -108,7 +119,7 @@ impl Iterator for History {
                 let str = String::from_utf8_lossy(&buf).into_owned();
                 Some(str.strip_suffix("#").unwrap_or(&str).trim().into())
             }
-            Shell::Fish => {
+            HistoryProvider::Fish => {
                 let mut buf = vec![];
 
                 loop {
