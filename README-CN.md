@@ -17,7 +17,7 @@
 
 - 生成过去一年中的命令行活跃分布，如每日最活跃时段，以及常用命令统计。
 - 类 Github 的年度命令分布图
-- 支持 Zsh & Bash
+- 支持 Zsh，Bash，Fish 和 Atuin
 - 封面的 Ferris <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
 ## 如何运行
@@ -31,7 +31,7 @@
    cargo run
    # 查看指定年份
    cargo run -- 2022
-   # 指定 shell [zsh/bash]
+   # 指定 shell [zsh/bash/fish] 或 shell 历史记录工具 [atuin]
    cargo run -- -s zsh
    ```
 
