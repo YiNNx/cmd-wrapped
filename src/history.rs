@@ -20,17 +20,7 @@ impl HistoryProvider {
     pub fn from(provider: &String) -> Self {
         match provider.as_str() {
             "zsh" => Self::Zsh,
-            "bash" => {
-                View::clear();
-                View::content("It appears that you are using Bash");
-                View::content(
-                    "If you haven't configured the $HISTTIMEFORMAT for Bash, the time-related statistics may be INVALID :(",
-                );
-                View::content("(but other components will remain unaffected.)");
-                View::content("Press [Enter] to continue");
-                View::wait();
-                Self::Bash
-            }
+            "bash" => Self::Bash,
             "atuin" => Self::Atuin,
             "fish" => Self::Fish,
             _ => {

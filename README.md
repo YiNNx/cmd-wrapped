@@ -23,11 +23,12 @@
 
 ## How to Use
 
-1. Build from source (recommended, but requires `cargo` installed):
+1. Build from source (recommended, but requires [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) installed):
 
    ```shell
    git clone git@github.com:YiNNx/cmd-wrapped.git
    cd cmd-wrapped
+   
    # for the past year
    cargo run
    # or for any specific year

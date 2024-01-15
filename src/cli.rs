@@ -28,11 +28,12 @@ impl Cli {
             .arg(
                 Arg::new("year")
                     .required(false)
+                    .help("Specify the year")
                     .value_parser(value_parser!(i32)),
             )
             .arg(
                 arg!(
-                -s --shell <SHELL> "Specify the shell or shell history tool"
+                -s --shell <SHELL> "Specify the target shell / history tool.\nSupported options - zsh, bash, fish, atuin"
                 )
                 .required(false),
             )
