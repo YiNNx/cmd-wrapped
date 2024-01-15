@@ -67,7 +67,7 @@ impl Statistic {
             self.command_count += 1;
 
             if self.first_command_time > time {
-                self.first_command = c.commandline.clone();
+                self.first_command = c.command_raw.clone();
                 self.first_command_time = time;
             }
 

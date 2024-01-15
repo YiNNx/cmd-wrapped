@@ -17,8 +17,8 @@ pub enum HistoryProvider {
 }
 
 impl HistoryProvider {
-    pub fn from(shell: &String) -> Self {
-        match shell.as_str() {
+    pub fn from(provider: &String) -> Self {
+        match provider.as_str() {
             "zsh" => Self::Zsh,
             "bash" => {
                 View::clear();
@@ -36,7 +36,7 @@ impl HistoryProvider {
             _ => {
                 View::content(&format!(
                     "Sorry, {} is not supported yet\n\n",
-                    shell.split('/').last().unwrap_or("")
+                    provider.split('/').last().unwrap_or("")
                 ));
                 std::process::exit(1);
             }
@@ -73,14 +73,14 @@ impl HistoryProvider {
 
 pub struct History {
     buff_reader: BufReader<Box<dyn Read>>,
-    shell_type: HistoryProvider,
+    provider: HistoryProvider,
 }
 
 impl History {
-    pub fn from(shell: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
+    pub fn from(provider: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
         Ok(History {
-            shell_type: shell.clone(),
-            buff_reader: BufReader::new(shell.history_stream()?),
+            provider: provider.clone(),
+            buff_reader: BufReader::new(provider.history_stream()?),
         })
     }
 }
@@ -89,7 +89,7 @@ impl Iterator for History {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
-        match self.shell_type {
+        match self.provider {
             HistoryProvider::Zsh | HistoryProvider::Atuin | HistoryProvider::Fish => {
                 let mut block = String::new();
                 let mut buf = vec![];
@@ -98,7 +98,7 @@ impl Iterator for History {
                     if buf.is_empty() {
                         return if block.is_empty() { None } else { Some(block) };
                     }
-                    let str = String::from_utf8_lossy(&buf).trim().to_owned();
+                    let str = String::from_utf8_lossy(&buf).trim_end().to_owned();
                     block += &str;
                     if str.is_empty() {
                         buf.clear();
@@ -122,11 +122,11 @@ impl Iterator for History {
                     }
                     let str = String::from_utf8_lossy(&buf).to_owned();
                     block += &str;
-                    if str.starts_with('#') {
+                    if str.is_empty() || str.starts_with('#') {
                         buf.clear();
                         continue;
                     }
-                    break Some(block.trim().into());
+                    break Some(block);
                 }
             }
         }

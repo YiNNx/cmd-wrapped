@@ -11,13 +11,13 @@ use stats::Statistic;
 
 fn main() {
     let args = Cli::parse_or_default();
-    let shell = HistoryProvider::from(&args.shell);
-    let history = History::from(&shell).expect("failed to read history file");
+    let provider = HistoryProvider::from(&args.shell);
+    let history = History::from(&provider).expect("failed to read history file");
     let mut stats = Statistic::from(args.year);
 
     for block in history {
         CommandParser::from_raw(block)
-            .parse(&shell)
+            .parse(&provider)
             .unwrap_or_default()
             .finish()
             .iter()

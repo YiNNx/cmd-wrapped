@@ -15,7 +15,7 @@ lazy_static::lazy_static! {
 
 #[derive(Debug, Default)]
 pub struct Command {
-    pub commandline: String,
+    pub command_raw: String,
     pub time: Option<DateTime<Local>>,
 
     pub command: String,
@@ -25,24 +25,24 @@ pub struct Command {
 impl Command {
     fn from(commandline: String, time: Option<DateTime<Local>>) -> Self {
         return Command {
-            commandline,
+            command_raw: commandline.trim().into(),
             time,
             ..Default::default()
         };
     }
 
     fn parse_line(mut self) -> Result<Self, Box<dyn Error>> {
-        if self.commandline.is_empty() || self.commandline.starts_with('#') {
+        if self.command_raw.is_empty() || self.command_raw.starts_with('#') {
             return Ok(self);
         }
         let command = self
-            .commandline
+            .command_raw
             .strip_prefix("sudo")
-            .unwrap_or(&self.commandline);
+            .unwrap_or(&self.command_raw);
         let args: Vec<_> = command.split_whitespace().map(String::from).collect();
         let c = args
             .iter()
-            .find(|s| !s.contains('=') && !s.contains('{') && !s.is_empty())
+            .find(|s| !s.is_empty() || !s.contains('=') && !s.contains('{'))
             .ok_or_else(|| "invalid command")?;
         self.command = c.to_owned();
         self.arguments = args;
@@ -50,7 +50,7 @@ impl Command {
     }
 }
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct CommandParser {
     raw: String,
     commands: Vec<Command>,
@@ -64,8 +64,8 @@ impl CommandParser {
         }
     }
 
-    pub fn parse(mut self, shell: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
-        let (commands_combined, time) = match shell {
+    pub fn parse(mut self, provider: &HistoryProvider) -> Result<Self, Box<dyn Error>> {
+        let (commands_combined, time) = match provider {
             HistoryProvider::Zsh => self.parse_zsh_raw(),
             HistoryProvider::Bash => self.parse_bash_raw(),
             HistoryProvider::Atuin => self.parse_atuin_raw(),
