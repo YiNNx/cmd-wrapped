@@ -3,7 +3,7 @@
 </p>
 <div align="center">
     <h1>cmd-wrapped</h1>
-    <p>Find out what the past year looks like in commandline!<br/><p/>
+    <p>Find out what the past year looks like in command line!<br/><p/>
 	<div>
         <img alt="Stars" src="https://img.shields.io/github/stars/YiNNx/cmd-wrapped?style=flat-square&color=87e3dd&labelColor=444B5A">
         &nbsp;
@@ -14,37 +14,42 @@
 
 
 
+
 ## Features
 
 - Analyze the commandline activity distribution for months, weekdays and hours, as well as frequently-used commands over the past years.
 - Github-style command distribution graph
-- Supports Zsh, Bash, Fish and Atuin
+- Supported shell / history tool:
+  - zsh
+  - bash
+  - fish
+  - atuin
+
 - A cute Ferris on the cover  <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
 ## How to Use
 
-1. Build from source (recommended, but requires [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) installed):
+- Build from source (recommended, but requires [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) installed):
 
    ```shell
    git clone git@github.com:YiNNx/cmd-wrapped.git
    cd cmd-wrapped
    
-   # for the past year
    cargo run
-   # or for any specific year
-   cargo run -- 2022
-   # specifying the shell [zsh/bash/fish] or shell history tool [atuin]
-   cargo run -- -s zsh
+   # Specify the year or the shell. For more information, try 'cargo run -- --help'
+   cargo run -- 2024 -s zsh
    ```
 
-2. Download from [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest), unzip and run the binary file in the terminal:
+- Download from [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest), unzip and run the binary file in the terminal:
 
    ```shell
-   # for the past year
    ./cmd-wrapped
-   # or for any specific year
-   ./cmd-wrapped 2022
+   
+   # Specify the year or the shell. For more information, try './cmd-wrapped --help'
+   ./cmd-wrapped 2024 -s zsh
    ```
+
+Supported options for `--shell` - `zsh`, `bash`, `fish`, `atuin`
 
 > [!NOTE]
 >

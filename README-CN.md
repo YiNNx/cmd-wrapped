@@ -17,31 +17,34 @@
 
 - 生成过去一年中的命令行活跃分布，如每日最活跃时段，以及常用命令统计。
 - 类 Github 的年度命令分布图
-- 支持 Zsh，Bash，Fish 和 Atuin
+- 支持：
+  - zsh
+  - bash
+  - fish
+  - atuin
+
 - 封面的 Ferris <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
 ## 如何运行
 
-1. 从源码构建 (推荐，但需要安装 `cargo`)
+1. 从源码构建 (推荐，但需要安装 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) )
 
    ```shell
    git clone git@github.com:YiNNx/cmd-wrapped.git
    cd cmd-wrapped
-   # 查看过去一年
+   
    cargo run
-   # 查看指定年份
-   cargo run -- 2022
-   # 指定 shell [zsh/bash/fish] 或 shell 历史记录工具 [atuin]
-   cargo run -- -s zsh
+   # 指定年份或 Shell 类型. 更多选项信息可查看 'cargo run -- --help'
+   cargo run -- 2024 -s zsh
    ```
-
+   
 2. 从 [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest) 中下载对应包并解压，在命令行中运行:
 
    ```shell
-   # 查看过去一年
    ./cmd-wrapped
-   # 查看指定年份
-   ./cmd-wrapped 2022
+   
+   # 指定年份或 Shell 类型. 更多选项信息可查看 './cmd-wrapped --help'
+   ./cmd-wrapped 2024 -s zsh
    ```
 
 > [!NOTE]
