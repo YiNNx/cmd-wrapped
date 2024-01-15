@@ -5,7 +5,7 @@
     <h1>cmd-wrapped</h1>
     <p>Find out what the past year looks like in commandline!<br/><p/>
 	<div>
-        <img alt="Stars" src="https://img.shields.io/github/stars/YiNNx/cmd-wrapped?style=flat-square&color=87e3dd&labelColor=444B5A">  
+        <img alt="Stars" src="https://img.shields.io/github/stars/YiNNx/cmd-wrapped?style=flat-square&color=87e3dd&labelColor=444B5A">
         &nbsp;
       	<img alt="Release" src="https://img.shields.io/github/v/release/YiNNx/cmd-wrapped?style=flat-square&color=87e3dd&labelColor=444B5A">
     </div>
@@ -18,7 +18,7 @@
 
 - Analyze the commandline activity distribution for months, weekdays and hours, as well as frequently-used commands over the past years.
 - Github-style command distribution graph
-- Supports both Zsh & Bash
+- Supports Zsh, Bash, Fish and Atuin
 - A cute Ferris on the cover  <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
 ## How to Use
@@ -32,7 +32,7 @@
    cargo run
    # or for any specific year
    cargo run -- 2022
-   # specifying the shell [zsh/bash] 
+   # specifying the shell [zsh/bash/fish] or shell history tool [atuin]
    cargo run -- -s zsh
    ```
 
