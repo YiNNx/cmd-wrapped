@@ -2,6 +2,12 @@
 name = "cmd-wrapped"
 version = "0.2.0"
 edition = "2021"
+authors = ["YiNNx <yinnnxt@gmail.com>"]
+description = "A CLI to view your command line stats for the past years. Support zsh, bash, fish as well as atuin."
+license = "MIT"
+repository = "https://github.com/YiNNx/cmd-wrapped"
+readme = "README.md"
+keywords = ["commandline", "shell", "zsh", "fish", "atuin"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,4 +17,4 @@ regex = "1.5"
 lazy_static = "1.4.0"
 colored = "2.1.0"
 num-traits = "0.2.17"
-clap = { version = "4.4.11", features = ["cargo"]}
+clap = { version = "4.4.11", features = ["cargo"] }
