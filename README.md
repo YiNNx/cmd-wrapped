@@ -29,27 +29,32 @@
 
 ## How to Use
 
-- Build from source (recommended, but requires [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) installed):
+### Installation
+
+- Install using [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
 
    ```shell
-   git clone git@github.com:YiNNx/cmd-wrapped.git
-   cd cmd-wrapped
-   
-   cargo run
-   # Specify the year or the shell. For more information, try 'cargo run -- --help'
-   cargo run -- 2024 -s zsh
+   cargo install cmd-wrapped
+   cmd-wrapped
    ```
-
+   
 - Download from [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest), unzip and run the binary file in the terminal:
 
    ```shell
    ./cmd-wrapped
-   
-   # Specify the year or the shell. For more information, try './cmd-wrapped --help'
-   ./cmd-wrapped 2024 -s zsh
    ```
 
-Supported options for `--shell` - `zsh`, `bash`, `fish`, `atuin`
+### Usage
+
+```shell
+cmd-wrapped [<year>] [-s <shell>] 
+
+# e.g.
+cmd-wrapped               # for the past year & current shell
+cmd-wrapped 2024 -s zsh   # specify the year & the shell type
+```
+
+Supported options for `<shell>` : `zsh`, `bash`, `fish`, `atuin`. 
 
 > [!NOTE]
 >

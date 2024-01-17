@@ -25,27 +25,34 @@
 
 - 封面的 Ferris <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
-## 如何运行
+## 如何使用
 
-1. 从源码构建 (推荐，但需要安装 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) )
+### 安装
 
-   ```shell
-   git clone git@github.com:YiNNx/cmd-wrapped.git
-   cd cmd-wrapped
-   
-   cargo run
-   # 指定年份或 Shell 类型. 更多选项信息可查看 'cargo run -- --help'
-   cargo run -- 2024 -s zsh
-   ```
-   
-2. 从 [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest) 中下载对应包并解压，在命令行中运行:
+- 使用 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) 安装
 
-   ```shell
-   ./cmd-wrapped
-   
-   # 指定年份或 Shell 类型. 更多选项信息可查看 './cmd-wrapped --help'
-   ./cmd-wrapped 2024 -s zsh
-   ```
+  ```shell
+  cargo install cmd-wrapped
+  cmd-wrapped
+  ```
+
+- 从 [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest) 中下载对应包并解压，在命令行中运行
+
+  ```shell
+  ./cmd-wrapped
+  ```
+
+### 参数
+
+```shell
+cmd-wrapped [<year>] [-s <shell>] 
+
+# e.g.
+cmd-wrapped               # for the past year & current shell
+cmd-wrapped 2024 -s zsh   # specify the year & the shell type
+```
+
+所支持的 `<shell>` 选项：`zsh`, `bash`, `fish`, `atuin`. 
 
 > [!NOTE]
 >
