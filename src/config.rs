@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::env;
 use std::error::Error;
 use std::fs;
@@ -13,13 +14,7 @@ lazy_static::lazy_static! {
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
-    pub providers: Vec<Provider>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct Provider {
-    pub name: String,
-    pub history_files: Vec<String>,
+    pub providers: HashMap<String, Vec<String>>,
 }
 
 impl Config {
