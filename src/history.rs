@@ -3,40 +3,31 @@ use std::{
     fs::File,
     io::{BufRead, BufReader, Cursor, Read},
     process::Command,
+    str::FromStr,
 };
 
-use crate::view::View;
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, strum::Display, strum::EnumString)]
 pub enum HistoryProvider {
+    #[strum(serialize = "zsh")]
     Zsh,
+    #[strum(serialize = "bash")]
     Bash,
+    #[strum(serialize = "atuin")]
     Atuin,
+    #[strum(serialize = "fish")]
     Fish,
 }
 
 impl HistoryProvider {
     pub fn from(provider: &String) -> Self {
-        match provider.as_str() {
-            "zsh" => Self::Zsh,
-            "bash" => Self::Bash,
-            "atuin" => Self::Atuin,
-            "fish" => Self::Fish,
-            _ => {
-                View::content(&format!(
-                    "Sorry, {} is not supported yet\n\n",
-                    provider.split('/').last().unwrap_or("")
-                ));
-                std::process::exit(1);
-            }
-        }
+        HistoryProvider::from_str(provider)
+            .expect(&format!("Sorry, {} is not supported yet\n\n", provider))
     }
 
     pub fn history_stream(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
         match self {
-            HistoryProvider::Zsh | HistoryProvider::Bash => {                
-                let program = self.program_name();
-
+            HistoryProvider::Zsh | HistoryProvider::Bash => {
+                let program = self.to_string();
                 let output = Command::new(program)
                     .args(["-i", "-c", "echo $HISTFILE"])
                     .output()?;
@@ -59,15 +50,6 @@ impl HistoryProvider {
             }
         }
     }
-
-    pub fn program_name(&self) -> &'static str {
-        match self {
-            HistoryProvider::Zsh => "zsh",
-            HistoryProvider::Bash => "bash",
-            HistoryProvider::Atuin => "atuin",
-            HistoryProvider::Fish => "fish",
-        }
-    } 
 }
 
 pub struct History {
