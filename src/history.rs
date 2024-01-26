@@ -35,14 +35,15 @@ impl HistoryProvider {
 
     pub fn history_stream(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
         match self {
-            HistoryProvider::Zsh | HistoryProvider::Bash => {
-                let history_file_name = match self {
-                    HistoryProvider::Zsh => ".zsh_history",
-                    HistoryProvider::Bash => ".bash_history",
-                    _ => unreachable!(),
-                };
-                let file_path = format!("{}/{}", env::var("HOME")?, history_file_name);
-                Ok(Box::new(File::open(file_path)?))
+            HistoryProvider::Zsh | HistoryProvider::Bash => {                
+                let program = self.program_name();
+
+                let output = Command::new(program)
+                    .args(["-i", "-c", "echo $HISTFILE"])
+                    .output()?;
+
+                let file_path = std::str::from_utf8(&output.stdout)?.trim().to_string();
+                Ok(Box::new(File::open(file_path.trim())?))
             }
             HistoryProvider::Atuin => {
                 let output = Command::new("atuin")
@@ -59,6 +60,15 @@ impl HistoryProvider {
             }
         }
     }
+
+    pub fn program_name(&self) -> &'static str {
+        match self {
+            HistoryProvider::Zsh => "zsh",
+            HistoryProvider::Bash => "bash",
+            HistoryProvider::Atuin => "atuin",
+            HistoryProvider::Fish => "fish",
+        }
+    } 
 }
 
 pub struct History {
