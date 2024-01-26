@@ -18,3 +18,4 @@ lazy_static = "1.4.0"
 colored = "2.1.0"
 num-traits = "0.2.17"
 clap = { version = "4.4.11", features = ["cargo"] }
+strum = { version = "0.25", features = ["derive"] }
