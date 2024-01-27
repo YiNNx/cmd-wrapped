@@ -27,13 +27,17 @@ impl HistoryProvider {
     pub fn history_stream(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
         match self {
             HistoryProvider::Zsh | HistoryProvider::Bash => {
-                let program = self.to_string();
-                let output = Command::new(program)
-                    .args(["-i", "-c", "echo $HISTFILE"])
+                let shell = self.to_string();
+                let output = Command::new(shell)
+                    .args(["-i", "-c", r#"echo -e "\n$HISTFILE""#])
                     .output()?;
 
-                let file_path = std::str::from_utf8(&output.stdout)?.trim().to_string();
-                Ok(Box::new(File::open(file_path.trim())?))
+                let file_path = std::str::from_utf8(&output.stdout)?
+                    .trim()
+                    .lines()
+                    .last()
+                    .expect("env $HISTFILE not set");
+                Ok(Box::new(File::open(file_path)?))
             }
             HistoryProvider::Atuin => {
                 let output = Command::new("atuin")
