@@ -219,7 +219,7 @@ impl Statistic {
         View::sub_title("Favorite Commands");
 
         let mut fav_command: Vec<_> = self.map_command.iter().collect();
-        fav_command.sort_by(|a, b| b.1.cmp(&a.1));
+        fav_command.sort_by(|a, b| b.1.cmp(a.1));
         for (command, &count) in fav_command.iter().take(10) {
             View::display_count_and_total(
                 command,

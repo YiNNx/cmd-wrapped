@@ -43,12 +43,14 @@ impl Command {
         let c = args
             .iter()
             .find(|s| !s.is_empty() || !s.contains('=') && !s.contains('{'))
-            .ok_or_else(|| "invalid command")?;
+            .ok_or("invalid command")?;
         self.command = c.to_owned();
         self.arguments = args;
         Ok(self)
     }
 }
+
+type ParsingData = (String, Option<DateTime<Local>>);
 
 #[derive(Default)]
 pub struct CommandParser {
@@ -59,7 +61,7 @@ pub struct CommandParser {
 impl CommandParser {
     pub fn from_raw(raw: String) -> Self {
         CommandParser {
-            raw: raw,
+            raw,
             ..Default::default()
         }
     }
@@ -79,7 +81,7 @@ impl CommandParser {
         Ok(self)
     }
 
-    pub fn parse_zsh_raw(&self) -> Result<(String, Option<DateTime<Local>>), Box<dyn Error>> {
+    pub fn parse_zsh_raw(&self) -> Result<ParsingData, Box<dyn Error>> {
         let captures = Re::captures(&RE_ZSH_HISTORY, &self.raw)?;
         let (timestamp, commands_raw) = (
             Re::get(&captures, 1)?.as_str(),
@@ -91,7 +93,7 @@ impl CommandParser {
         Ok((commands_raw, time))
     }
 
-    pub fn parse_bash_raw(&self) -> Result<(String, Option<DateTime<Local>>), Box<dyn Error>> {
+    pub fn parse_bash_raw(&self) -> Result<ParsingData, Box<dyn Error>> {
         if !&self.raw.starts_with('#') {
             return Ok((self.raw.clone(), None));
         }
@@ -107,17 +109,17 @@ impl CommandParser {
             commands_raw
                 .lines()
                 .find(|item| !item.starts_with('#'))
-                .ok_or_else(|| "empty command found")?
+                .ok_or("empty command found")?
                 .into(),
             time,
         ))
     }
 
-    pub fn parse_atuin_raw(&self) -> Result<(String, Option<DateTime<Local>>), Box<dyn Error>> {
+    pub fn parse_atuin_raw(&self) -> Result<ParsingData, Box<dyn Error>> {
         let (time_raw, commands_raw) = self
             .raw
             .split_once(';')
-            .ok_or_else(|| "failed to split atuin command")?;
+            .ok_or("failed to split atuin command")?;
 
         let time = NaiveDateTime::parse_from_str(time_raw, "%Y-%m-%d %H:%M:%S")
             .ok()
@@ -126,11 +128,11 @@ impl CommandParser {
         Ok((commands_raw.into(), time))
     }
 
-    pub fn parse_fish_raw(&self) -> Result<(String, Option<DateTime<Local>>), Box<dyn Error>> {
+    pub fn parse_fish_raw(&self) -> Result<ParsingData, Box<dyn Error>> {
         let (timestamp, commands_raw) = self
             .raw
             .split_once(';')
-            .ok_or_else(|| "failed to split atuin command")?;
+            .ok_or("failed to split atuin command")?;
 
         let time = Some(DateTime::<Local>::from(
             UNIX_EPOCH + Duration::from_secs(timestamp.parse::<u64>()?),
@@ -155,6 +157,6 @@ impl Re {
     fn get<'a>(captures: &Captures<'a>, index: usize) -> Result<Match<'a>, Box<dyn Error>> {
         Ok(captures
             .get(index)
-            .ok_or_else(|| format!("failed to get match from re capture"))?)
+            .ok_or("failed to get match from re capture")?)
     }
 }

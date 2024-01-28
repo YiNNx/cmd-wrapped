@@ -21,7 +21,7 @@ pub enum HistoryProvider {
 impl HistoryProvider {
     pub fn from(provider: &String) -> Self {
         HistoryProvider::from_str(provider)
-            .expect(&format!("Sorry, {} is not supported yet\n\n", provider))
+            .unwrap_or_else(|_| panic!("Sorry, {} is not supported yet\n\n", provider))
     }
 
     pub fn history_stream(&self) -> Result<Box<dyn Read>, Box<dyn Error>> {
@@ -105,7 +105,7 @@ impl Iterator for History {
                     if buf.is_empty() {
                         return None;
                     }
-                    let str = String::from_utf8_lossy(&buf).to_owned();
+                    let str = String::from_utf8_lossy(&buf).into_owned();
                     block += &str;
                     if str.is_empty() || str.starts_with('#') {
                         buf.clear();
