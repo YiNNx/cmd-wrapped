@@ -11,7 +11,11 @@ impl Cli {
     fn default_year() -> i32 {
         let now = Local::now();
         let year = now.year();
-        return if now.month() <= 3 { year - 1 } else { year };
+        if now.month() <= 3 {
+            year - 1
+        } else {
+            year
+        }
     }
 
     fn current_shell() -> String {
@@ -45,6 +49,6 @@ impl Cli {
             .map(|ptr| ptr.to_owned())
             .unwrap_or(Self::current_shell());
 
-        return Cli { year, shell };
+        Cli { year, shell }
     }
 }
