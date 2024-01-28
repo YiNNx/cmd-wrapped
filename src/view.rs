@@ -37,20 +37,24 @@ impl View {
                                        ――――――――――――――――――――――――――――――――
                                     /   "#
                 .cyan()
+                .to_string()
             + &format!("Find what your {}", year)
             + &r#"             \
                                    |    "#
                 .cyan()
+                .to_string()
             + "looks like in command-line!"
             + &r#"      |
                                     \   "#
                 .cyan()
+                .to_string()
             + "Press [Enter] to page through."
             + &r#"  /   
                                        ――――――――――――――――――――――――――――――――
                                                        \
                                                         \"#
-            .cyan();
+            .cyan()
+            .to_string();
 
         let ferris = r#"
                                                            __~^~^~__
@@ -64,7 +68,7 @@ impl View {
             if c == '█' {
                 res += &c.to_string();
             } else {
-                res += &c.to_string().cyan();
+                res += &c.to_string().cyan().to_string();
             }
         }
         println!("{res}");
@@ -82,7 +86,14 @@ impl View {
 
     pub fn sub_title_with_keyword<T: ToString>(sub_title: &str, keyword: T) {
         Self::sub_title(
-            &(sub_title.to_string() + " - " + &keyword.to_string().italic().underline().italic()),
+            &(sub_title.to_string()
+                + " - "
+                + &keyword
+                    .to_string()
+                    .italic()
+                    .underline()
+                    .italic()
+                    .to_string()),
         );
     }
 
