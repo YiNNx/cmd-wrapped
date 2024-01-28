@@ -1,5 +1,5 @@
 <p align="right">
-	English / <a href="./README-CN.md">简体中文</a>
+	<a href="./README.md">English</a> / 简体中文
 </p>
 <div align="center">
     <h1>cmd-wrapped</h1>
