@@ -79,7 +79,7 @@ impl Statistic {
     }
 
     pub fn most_active_period(&self) -> &str {
-        let boundaries = vec![0, 6, 11, 14, 19, 24];
+        let boundaries = [0, 6, 11, 14, 19, 24];
 
         let time_periods: Vec<usize> = boundaries
             .windows(2)

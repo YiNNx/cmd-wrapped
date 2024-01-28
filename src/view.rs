@@ -39,28 +39,28 @@ impl View {
                 .cyan()
                 .to_string()
             + &format!("Find what your {}", year)
-            + &r#"             \
-                                   |    "#
+            + &r"             \
+                                   |    "
                 .cyan()
                 .to_string()
             + "looks like in command-line!"
-            + &r#"      |
-                                    \   "#
+            + &r"      |
+                                    \   "
                 .cyan()
                 .to_string()
             + "Press [Enter] to page through."
-            + &r#"  /   
+            + &r"  /   
                                        ――――――――――――――――――――――――――――――――
                                                        \
-                                                        \"#
+                                                        \"
             .cyan()
             .to_string();
 
-        let ferris = r#"
+        let ferris = r"
                                                            __~^~^~__
                                                       \) /           \ (/
                                                         '_   0 ◡ 0   _'
-                                                       \\   ¯¯¯¯¯¯¯   //"#;
+                                                       \\   ¯¯¯¯¯¯¯   //";
 
         Self::clear();
         let mut res = String::new();
