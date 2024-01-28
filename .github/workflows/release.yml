@@ -1,4 +1,4 @@
-name: "Release"
+name: Release
 
 on:
   push:
@@ -62,18 +62,23 @@ jobs:
         run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
 
   release:
-    name: "Tagged Release"
-    runs-on: "ubuntu-20.04"
+    name: Tagged Release
+    runs-on: ubuntu-20.04
     needs: build
     steps:
       - uses: actions/download-artifact@v3
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Compress files
+        run: |
+          for file in $(find ./build -type f); do
+            zip "${file}.zip" "${file}"
+          done
+      - uses: marvinpinto/action-automatic-releases@latest
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: false
           files: |
-            ./build/cmd-wrapped-x86_64-apple-darwin
-            ./build/cmd-wrapped-arm64-apple-darwin
-            ./build/cmd-wrapped-x86_64-linux
-            ./build/cmd-wrapped-aarch64-linux
-            ./build/cmd-wrapped-armv7-linux
+            ./build/cmd-wrapped-x86_64-apple-darwin.zip
+            ./build/cmd-wrapped-arm64-apple-darwin.zip
+            ./build/cmd-wrapped-x86_64-linux.zip
+            ./build/cmd-wrapped-aarch64-linux.zip
+            ./build/cmd-wrapped-armv7-linux.zip
