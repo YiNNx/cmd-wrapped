@@ -39,28 +39,28 @@ impl View {
                 .cyan()
                 .to_string()
             + &format!("Find what your {}", year)
-            + &r#"             \
-                                   |    "#
+            + &r"             \
+                                   |    "
                 .cyan()
                 .to_string()
             + "looks like in command-line!"
-            + &r#"      |
-                                    \   "#
+            + &r"      |
+                                    \   "
                 .cyan()
                 .to_string()
             + "Press [Enter] to page through."
-            + &r#"  /   
+            + &r"  /   
                                        ――――――――――――――――――――――――――――――――
                                                        \
-                                                        \"#
+                                                        \"
             .cyan()
             .to_string();
 
-        let ferris = r#"
+        let ferris = r"
                                                            __~^~^~__
                                                       \) /           \ (/
                                                         '_   0 ◡ 0   _'
-                                                       \\   ¯¯¯¯¯¯¯   //"#;
+                                                       \\   ¯¯¯¯¯¯¯   //";
 
         Self::clear();
         let mut res = String::new();
@@ -115,7 +115,7 @@ impl View {
     }
 
     pub fn clear() {
-        print!("{esc}[2J{esc}[1;1H\n", esc = 27 as char);
+        println!("{esc}[2J{esc}[1;1H", esc = 27 as char);
     }
 
     pub fn padding() {
@@ -154,11 +154,11 @@ impl View {
         }
     }
 
-    pub fn graph(graph_list: &Vec<usize>) -> String {
-        let mut res = format!(" {}\n", "―".repeat(110)).to_string()
-        +&format!("│  Jan       Feb     Mar     Apr       May     Jun     Jul       Aug     Sep     Oct       Nov     Dec         │\n").dimmed();
+    pub fn graph(graph_list: &[usize]) -> String {
+        let mut res = format!(" {}\n", "―".repeat(110))
+        +&("│  Jan       Feb     Mar     Apr       May     Jun     Jul       Aug     Sep     Oct       Nov     Dec         │\n").dimmed();
         for i in 0..=6 {
-            res += &format!("│ ");
+            res += "│ ";
             for j in 0..=52 {
                 let ordinal = i + j * 7;
                 if ordinal >= 365 {
@@ -175,7 +175,7 @@ impl View {
                     )
                 }
             }
-            res += &format!("   │\n");
+            res += "   │\n";
         }
         res += &format!(" {}", "_".repeat(110));
         res
