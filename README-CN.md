@@ -66,4 +66,4 @@ cmd-wrapped 2024 -s zsh   # specify the year & the shell type
 ## 致谢 & 开源协议
 
 - 感谢 [@jyi2ya](https://github.com/jyi2ya) 的绝妙想法！
-- 开源协议: [MIT](https://github.com/YiNNx/cmd-wrapped/blob/master/License)
+- 开源协议: [MIT](https://github.com/YiNNx/cmd-wrapped/blob/master/LICENSE)
