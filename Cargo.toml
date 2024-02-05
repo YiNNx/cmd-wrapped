@@ -1,6 +1,6 @@
 [package]
 name = "cmd-wrapped"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["YiNNx <yinnnxt@gmail.com>"]
 description = "A CLI to view your command line stats for the past years. Support zsh, bash, fish as well as atuin."
