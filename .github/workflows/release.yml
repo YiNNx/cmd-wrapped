@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  CARGO_INCREMENTAL: 0
+
+jobs:
+  build:
+    name: Build
+    strategy:
+      fail-fast: false
+      matrix:
+        job:
+          - target: x86_64-unknown-linux-musl
+            exe: x86_64-linux
+            os: ubuntu-latest
+          - target: aarch64-unknown-linux-musl
+            exe: aarch64-linux
+            os: ubuntu-latest
+          - target: armv7-unknown-linux-musleabi
+            exe: armv7-linux
+            os: ubuntu-latest
+          - target: x86_64-apple-darwin
+            exe: x86-64-apple-darwin
+            os: macos-latest
+          - target: aarch64-apple-darwin
+            exe: arm64-apple-darwin
+            os: macos-latest
+    runs-on: ${{ matrix.job.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+          target: ${{ matrix.job.target }}
+          components: rust-src
+      - uses: actions-rs/cargo@v1
+        with:
+          use-cross: true
+          args: --release --target=${{ matrix.job.target }} --locked
+          command: build
+      - name: Rename build
+        run: cp target/${{ matrix.job.target }}/release/cmd-wrapped cmd-wrapped-${{ matrix.job.exe }}
+      - name: Archive production artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build
+          path: cmd-wrapped-${{ matrix.job.exe }}
+
+  cargo-publish:
+    runs-on: ubuntu-20.04
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+      - name: Cargo publish
+        run: cargo publish --token ${{ secrets.CRATES_IO_TOKEN }}
+
+  release:
+    name: Tagged Release
+    runs-on: ubuntu-20.04
+    needs: build
+    steps:
+      - uses: actions/download-artifact@v3
+      - name: Compress files
+        run: |
+          for file in $(find ./build -type f); do
+            zip "${file}.zip" "${file}"
+          done
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          files: |
+            ./build/cmd-wrapped-x86_64-apple-darwin.zip
+            ./build/cmd-wrapped-arm64-apple-darwin.zip
+            ./build/cmd-wrapped-x86_64-linux.zip
+            ./build/cmd-wrapped-aarch64-linux.zip
+            ./build/cmd-wrapped-armv7-linux.zip
