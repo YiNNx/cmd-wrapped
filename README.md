@@ -68,4 +68,4 @@ Supported options for `<shell>` : `zsh`, `bash`, `fish`, `atuin`.
 ## Credits & License
 
 - Special thanks to [@jyi2ya](https://github.com/jyi2ya) for the cooool idea!
-- License: [MIT](https://github.com/YiNNx/cmd-wrapped/blob/master/License)
+- License: [MIT](https://github.com/YiNNx/cmd-wrapped/blob/master/LICENSE)
