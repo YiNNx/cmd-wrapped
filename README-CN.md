@@ -42,6 +42,12 @@
   ./cmd-wrapped
   ```
 
+#### Nix❄️
+
+```nix
+nix run nixpkgs#cmd-wrapped
+```
+
 ### 参数
 
 ```shell
