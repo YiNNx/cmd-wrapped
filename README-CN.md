@@ -29,23 +29,26 @@
 
 ### 安装
 
-- 使用 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) 安装
+- #### 使用 [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html) 安装
 
-  ```shell
-  cargo install cmd-wrapped
-  cmd-wrapped
-  ```
+```shell
+cargo install cmd-wrapped
+```
 
-- 从 [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest) 中下载对应包并解压，在命令行中运行
+- #### 从 [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest) 下载
 
-  ```shell
-  ./cmd-wrapped
-  ```
+下载对应包并解压，在命令行中运行（可能需要 chmod）
 
-#### Nix❄️
+- #### Nix❄️
 
 ```nix
 nix run nixpkgs#cmd-wrapped
+```
+
+- #### Arch
+
+```shell
+yay -S cmd-wrapped
 ```
 
 ### 参数
