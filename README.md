@@ -44,6 +44,12 @@
    ./cmd-wrapped
    ```
 
+#### Nix❄️
+
+```nix
+nix run nixpkgs#cmd-wrapped
+```
+
 ### Usage
 
 ```shell
