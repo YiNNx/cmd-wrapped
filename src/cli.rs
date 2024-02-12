@@ -1,5 +1,5 @@
 use chrono::{Datelike, Local};
-use clap::{arg, command, value_parser, Arg};
+use clap::{arg, command, value_parser, Arg, Command};
 use std::env;
 
 pub struct Cli {
@@ -40,6 +40,10 @@ impl Cli {
                 -s --shell <SHELL> "Specify the target shell / history tool.\nSupported options - zsh, bash, fish, atuin"
                 )
                 .required(false),
+            )
+            .subcommand(
+                Command::new("stats")
+                    .about("Fetch the current stats"),    
             )
             .get_matches();
 
