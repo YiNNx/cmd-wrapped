@@ -1,3 +1,4 @@
+use chrono::{Datelike, Local};
 use colored::*;
 use std::{
     io::{stdout, Write},
@@ -6,6 +7,10 @@ use std::{
 };
 
 pub const STR_WEEKDAY: [&str; 7] = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+pub const STR_MONTH: [&str; 12] = [
+    "Jan  ", "Feb ", "Mar  ", "Apr ", "May ", "Jun  ", "Jul ", "Aug ", "Sep  ", "Oct ", "Nov ",
+    "Dec  ",
+];
 
 pub struct View;
 
@@ -88,12 +93,7 @@ impl View {
         Self::sub_title(
             &(sub_title.to_string()
                 + " - "
-                + &keyword
-                    .to_string()
-                    .italic()
-                    .underline()
-                    .italic()
-                    .to_string()),
+                + &keyword.to_string().italic().underline().to_string()),
         );
     }
 
@@ -114,6 +114,7 @@ impl View {
         Self::clear();
     }
 
+    // position the cursor at row 1, column 1
     pub fn clear() {
         println!("{esc}[2J{esc}[1;1H", esc = 27 as char);
     }
@@ -127,8 +128,7 @@ impl View {
     }
 
     pub fn cyan_println(str: &str) {
-        Self::padding();
-        println!("{}", str.cyan().bold());
+        Self::typewriter(&str.cyan().bold().to_string());
     }
 
     pub fn typewriter(s: &str) {
@@ -154,8 +154,14 @@ impl View {
         }
     }
 
+    pub fn display(s: &str) {
+        for c in s.lines() {
+            println!("    {c}")
+        }
+    }
+
     pub fn graph(graph_list: &[usize]) -> String {
-        let mut res = format!(" {}\n", "―".repeat(110))
+        let mut res = format!(" {}\n", "―".repeat(109))
         +&("│  Jan       Feb     Mar     Apr       May     Jun     Jul       Aug     Sep     Oct       Nov     Dec         │\n").dimmed();
         for i in 0..=6 {
             res += "│ ";
@@ -177,12 +183,57 @@ impl View {
             }
             res += "   │\n";
         }
-        res += &format!(" {}", "_".repeat(110));
+        res
+    }
+
+    pub fn graph2(graph_list: &[usize]) -> String {
+        let mut res = String::new();
+        let now = Local::now();
+        for i in 0..12 {
+            let index = ((now.month() + i) % 12) as usize;
+            res += STR_MONTH[index];
+        }
+        res+="\n";
+
+        let start = if now.month() == 12 {
+            now.with_day(1)
+                .unwrap_or_default()
+                .with_month(1)
+                .unwrap_or_default()
+                .ordinal0()
+        } else {
+            now.with_day(1)
+                .unwrap_or_default()
+                .with_month(now.month() - 1)
+                .unwrap_or_default()
+                .with_year(now.year() - 1)
+                .unwrap_or_default()
+                .ordinal0()
+        };
+        for i in 0..=6 {
+            for j in 0..=52 {
+                let ordinal = ((i + j * 7 + start) % 366) as usize;
+                if ordinal >= 365 {
+                    res += " "
+                } else {
+                    res += &format!(
+                        "{}",
+                        match graph_list[ordinal] {
+                            0 => " ".normal(),
+                            1..=30 => "●".cyan().dimmed(),
+                            31..=50 => "●".cyan(),
+                            _ => "●".bright_cyan().bold(),
+                        }
+                    )
+                }
+            }
+            res += "  \n";
+        }
         res
     }
 
     pub fn histogram<T: ToString>(index: T, count: usize, max: usize) {
-        Self::content(&format!(
+        Self::typewriter_for_line(&format!(
             "{:<3} {}| {}",
             index.to_string().bold(),
             "#".repeat(count / (max / 90 + 1)).dimmed().bold(),
@@ -194,11 +245,20 @@ impl View {
         ));
     }
 
+    pub fn histogram_command<T: ToString>(index: T, count: usize, max: usize) -> String {
+        format!(
+            "{:<8} {}| {}",
+            index.to_string(),
+            "#".repeat((count as f64 * (35.0 / max as f64)) as usize),
+            if count == max { count } else { count },
+        )
+    }
+
     pub fn histogram_with_total<T: ToString>(index: T, count: usize, total: usize, max: usize) {
         if count == 0 {
             return;
         }
-        Self::content(&format!(
+        Self::typewriter_for_line(&format!(
             "{:<125}{}",
             &format!(
                 "{} {}| {:<5}",
@@ -211,7 +271,7 @@ impl View {
     }
 
     pub fn display_count_and_total(item: &String, count: usize, total: usize) {
-        View::content(&format!(
+        View::typewriter_for_line(&format!(
             "- {:<50} {:<6}{}",
             item.green().bold(),
             count,
@@ -221,16 +281,40 @@ impl View {
 
     pub fn hint_finish(year: i32) {
         Self::sub_title(&format!("All {} command line stats wrapped!", year));
-
         Self::typewriter_for_line(
-            &("Specify other years with arguments, such as `./cmd-wrapped 2022`\n\n".to_string()
-                + &format!(
-                    "If you enjoy this open-source CLI, give it a star:  {}",
-                    "https://github.com/YiNNx/cmd-wrapped\n\n"
-                        .bold()
-                        .to_string()
-                        + "Also feel free to submit ideas or issues! :-D"
-                )),
+            "Specify other years with arguments, such as `./cmd-wrapped 2022`\n\n",
         );
+    }
+}
+
+pub struct Window {
+    width: usize,
+    display: fn(&str),
+}
+
+impl Window {
+    pub fn new(width: usize, fn_display: fn(&str)) -> Window {
+        Window {
+            width,
+            display: fn_display,
+        }
+    }
+
+    pub fn edge(&self) {
+        (self.display)(&format!(" {} \n", "―".repeat(self.width),))
+    }
+
+    pub fn empty(&self) {
+        (self.display)(&format!("│{}│\n", " ".repeat(self.width)))
+    }
+
+    pub fn content(&self, s: &str) {
+        for c in s.lines() {
+            (self.display)(&format!(
+                "│    {:<width$}    │\n",
+                c,
+                width = self.width - 8
+            ))
+        }
     }
 }

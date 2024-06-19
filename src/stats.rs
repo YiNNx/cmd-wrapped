@@ -1,10 +1,11 @@
 use chrono::{DateTime, Datelike, Local, NaiveDate, Timelike};
+use colored::*;
 use num_traits::cast::FromPrimitive;
 use std::collections::HashMap;
 
 use crate::{
     parser::Command,
-    view::{View, STR_WEEKDAY},
+    view::{View, Window, STR_WEEKDAY},
 };
 
 #[derive(Default)]
@@ -12,6 +13,7 @@ pub struct Statistic {
     year: i32,
 
     list_daytime: Vec<usize>,
+    list_daytime_today: Vec<usize>,
     list_weekday: Vec<usize>,
     list_day: Vec<usize>,
     list_month: Vec<usize>,
@@ -19,6 +21,7 @@ pub struct Statistic {
 
     map_command: HashMap<String, usize>,
     map_command_total: HashMap<String, usize>,
+    map_command_today: HashMap<String, usize>,
 
     command_count: usize,
     command_count_total: usize,
@@ -33,10 +36,11 @@ impl Statistic {
             year,
             first_command_time: Local::now(),
             list_daytime: vec![0; 24],
+            list_daytime_today: vec![0; 24],
             list_weekday: vec![0; 7],
             list_month: vec![0; 12],
             list_month_total: vec![0; 12],
-            list_day: vec![0; 365],
+            list_day: vec![0; 366],
             ..Default::default()
         }
     }
@@ -52,7 +56,16 @@ impl Statistic {
             let month = time.month0() as usize;
             self.list_month_total[month] += 1;
 
-            if time.year() != self.year {
+            if self.year == 0
+                && time.year() == Local::now().year() - 1
+                && time.month() > Local::now().month()
+            {
+                self.list_day[time.ordinal0() as usize] += 1;
+            }
+
+            if (self.year != 0 && time.year() != self.year)
+                || (self.year == 0 && time.year() != Local::now().year())
+            {
                 return;
             }
 
@@ -75,6 +88,14 @@ impl Statistic {
                 .entry(c.command.clone())
                 .and_modify(|counter| *counter += 1)
                 .or_insert(1);
+
+            if self.year == 0 && time.ordinal0() == Local::now().ordinal0() {
+                self.list_daytime_today[hour] += 1;
+                self.map_command_today
+                    .entry(c.command.clone())
+                    .and_modify(|counter| *counter += 1)
+                    .or_insert(1);
+            }
         }
     }
 
@@ -125,7 +146,7 @@ impl Statistic {
             .unwrap_or_default()
     }
 
-    pub fn output(&self) {
+    pub fn output_manual(&self) {
         // Cover
         View::display_cover(self.year);
 
@@ -242,5 +263,93 @@ impl Statistic {
 
         View::hint_finish(self.year);
         View::wait();
+    }
+
+    pub fn daytime_graph(list: &Vec<usize>) -> String {
+        let mut res = String::new();
+
+        let max = list.iter().max().map(|p| *p).unwrap_or_default();
+        for row in 0..=4 {
+            for hour in 0..list.len() {
+                res += if (max / 5) * (4 - row) < list[hour] {
+                    "##"
+                } else {
+                    "  "
+                }
+            }
+            res += "\n"
+        }
+        res += &format!("{}\n", "-".repeat(48));
+        res += &format!("0   2   4   6   8   10  12  14  16  18  20  22\n");
+        res
+    }
+
+    pub fn output_recent(&self) {
+        let window = Window::new(64, View::display);
+
+        View::line_break();
+        window.edge();
+        window.empty();
+
+        window.content(&format!(
+            "Today -  {} commands",
+            self.list_day[Local::now().ordinal0() as usize]
+        ));
+        window.empty();
+
+        let today = Self::daytime_graph(&self.list_daytime_today);
+        window.content(&today);
+        window.empty();
+
+        let mut fav_command: Vec<_> = self.map_command_today.iter().collect();
+        fav_command.sort_by(|a, b| b.1.cmp(a.1));
+        let max = fav_command.get(0).map(|(_, b)| **b).unwrap_or_default();
+        for (command, &count) in fav_command.iter().take(5) {
+            window.content(&View::histogram_command(command, count, max))
+        }
+
+        window.empty();
+        window.edge();
+        window.empty();
+
+        window.content(&format!("This year -  {} commands", self.command_count));
+        window.empty();
+
+        window.content(&View::graph2(&self.list_day));
+        window.empty();
+
+        View::typewriter_for_line(&format!(
+            "│   ○ May 2024 - 202 commands / 151 unique commands{}│\n",
+            " ".repeat(61)
+        ));
+        View::typewriter_for_line(&format!("│   │{}│\n", " ".repeat(107)));
+        let mut fav_command: Vec<_> = self.map_command.iter().collect();
+        fav_command.sort_by(|a, b| b.1.cmp(a.1));
+        for (command, &count) in fav_command.iter().take(4) {
+            View::typewriter_for_line(&format!(
+                "│   • {:<30}               {:<6}     │",
+                command.green().bold(),
+                count
+            ));
+        }
+        View::typewriter_for_line(&format!("│   │{}│\n", " ".repeat(107)));
+
+        View::typewriter_for_line(&format!(
+            "│   ○ May 2024 - 202 commands / 151 unique commands{}│\n",
+            " ".repeat(61)
+        ));
+        View::typewriter_for_line(&format!("│   │{}│\n", " ".repeat(107)));
+        let mut fav_command: Vec<_> = self.map_command.iter().collect();
+        fav_command.sort_by(|a, b| b.1.cmp(a.1));
+        for (command, &count) in fav_command.iter().take(4) {
+            View::typewriter_for_line(&format!(
+                "│   • {:<30}               {:<6}     │",
+                command.green().bold(),
+                count
+            ));
+        }
+
+        window.empty();
+        window.edge();
     }
 }
