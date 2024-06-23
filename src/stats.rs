@@ -5,7 +5,7 @@ use std::collections::HashMap;
 
 use crate::{
     parser::Command,
-    view::{View, Window, STR_WEEKDAY},
+    view::{View, Window, STR_MONTH, STR_WEEKDAY},
 };
 
 #[derive(Default)]
@@ -19,9 +19,10 @@ pub struct Statistic {
     list_month: Vec<usize>,
     list_month_total: Vec<usize>,
 
-    map_command: HashMap<String, usize>,
     map_command_total: HashMap<String, usize>,
-    map_command_today: HashMap<String, usize>,
+    map_command_daily: HashMap<String, usize>,
+    map_command_monthly: Vec<HashMap<String, usize>>,
+    map_command_annual: HashMap<String, usize>,
 
     command_count: usize,
     command_count_total: usize,
@@ -41,6 +42,7 @@ impl Statistic {
             list_month: vec![0; 12],
             list_month_total: vec![0; 12],
             list_day: vec![0; 366],
+            map_command_monthly: vec![HashMap::new(); 12],
             ..Default::default()
         }
     }
@@ -55,13 +57,6 @@ impl Statistic {
         if let Some(time) = c.time {
             let month = time.month0() as usize;
             self.list_month_total[month] += 1;
-
-            if self.year == 0
-                && time.year() == Local::now().year() - 1
-                && time.month() > Local::now().month()
-            {
-                self.list_day[time.ordinal0() as usize] += 1;
-            }
 
             if (self.year != 0 && time.year() != self.year)
                 || (self.year == 0 && time.year() != Local::now().year())
@@ -84,14 +79,18 @@ impl Statistic {
                 self.first_command_time = time;
             }
 
-            self.map_command
+            self.map_command_annual
+                .entry(c.command.clone())
+                .and_modify(|counter| *counter += 1)
+                .or_insert(1);
+            self.map_command_monthly[month]
                 .entry(c.command.clone())
                 .and_modify(|counter| *counter += 1)
                 .or_insert(1);
 
             if self.year == 0 && time.ordinal0() == Local::now().ordinal0() {
                 self.list_daytime_today[hour] += 1;
-                self.map_command_today
+                self.map_command_daily
                     .entry(c.command.clone())
                     .and_modify(|counter| *counter += 1)
                     .or_insert(1);
@@ -146,7 +145,7 @@ impl Statistic {
             .unwrap_or_default()
     }
 
-    pub fn output_manual(&self) {
+    pub fn output_annual(&self) {
         // Cover
         View::display_cover(self.year);
 
@@ -239,7 +238,7 @@ impl Statistic {
 
         View::sub_title("Favorite Commands");
 
-        let mut fav_command: Vec<_> = self.map_command.iter().collect();
+        let mut fav_command: Vec<_> = self.map_command_annual.iter().collect();
         fav_command.sort_by(|a, b| b.1.cmp(a.1));
         for (command, &count) in fav_command.iter().take(10) {
             View::display_count_and_total(
@@ -271,7 +270,8 @@ impl Statistic {
         let max = list.iter().max().map(|p| *p).unwrap_or_default();
         for row in 0..=4 {
             for hour in 0..list.len() {
-                res += if (max / 5) * (4 - row) < list[hour] {
+                let h = (7 + hour) % list.len();
+                res += if (max / 5) * (4 - row) < list[h] {
                     "##"
                 } else {
                     "  "
@@ -280,20 +280,19 @@ impl Statistic {
             res += "\n"
         }
         res += &format!("{}\n", "-".repeat(48));
-        res += &format!("0   2   4   6   8   10  12  14  16  18  20  22\n");
+        res += &format!("  8   10  12  14  16  18  20  22  0   2   4   6\n");
         res
     }
 
     pub fn output_recent(&self) {
         let window = Window::new(64, View::display);
-
-        View::line_break();
         window.edge();
         window.empty();
 
         window.content(&format!(
-            "Today -  {} commands",
-            self.list_day[Local::now().ordinal0() as usize]
+            "Today - {} commands / {} unique commands",
+            self.list_day[Local::now().ordinal0() as usize],
+            self.map_command_daily.len()
         ));
         window.empty();
 
@@ -301,7 +300,7 @@ impl Statistic {
         window.content(&today);
         window.empty();
 
-        let mut fav_command: Vec<_> = self.map_command_today.iter().collect();
+        let mut fav_command: Vec<_> = self.map_command_daily.iter().collect();
         fav_command.sort_by(|a, b| b.1.cmp(a.1));
         let max = fav_command.get(0).map(|(_, b)| **b).unwrap_or_default();
         for (command, &count) in fav_command.iter().take(5) {
@@ -312,41 +311,36 @@ impl Statistic {
         window.edge();
         window.empty();
 
-        window.content(&format!("This year -  {} commands", self.command_count));
+        window.content(&format!(
+            "This year - {} commands / {} unique commands",
+            self.command_count,
+            self.map_command_annual.len()
+        ));
         window.empty();
 
         window.content(&View::graph2(&self.list_day));
         window.empty();
 
-        View::typewriter_for_line(&format!(
-            "│   ○ May 2024 - 202 commands / 151 unique commands{}│\n",
-            " ".repeat(61)
-        ));
-        View::typewriter_for_line(&format!("│   │{}│\n", " ".repeat(107)));
-        let mut fav_command: Vec<_> = self.map_command.iter().collect();
-        fav_command.sort_by(|a, b| b.1.cmp(a.1));
-        for (command, &count) in fav_command.iter().take(4) {
-            View::typewriter_for_line(&format!(
-                "│   • {:<30}               {:<6}     │",
-                command.green().bold(),
-                count
+        let month = Local::now().month0() as isize;
+        for m in month - 1..=month {
+            if m < 0 {
+                continue;
+            }
+            window.content(&format!(
+                "○  {} - {} commands / {} unique commands",
+                STR_MONTH[m as usize],
+                self.list_month[m as usize],
+                self.map_command_monthly[m as usize].len()
             ));
-        }
-        View::typewriter_for_line(&format!("│   │{}│\n", " ".repeat(107)));
-
-        View::typewriter_for_line(&format!(
-            "│   ○ May 2024 - 202 commands / 151 unique commands{}│\n",
-            " ".repeat(61)
-        ));
-        View::typewriter_for_line(&format!("│   │{}│\n", " ".repeat(107)));
-        let mut fav_command: Vec<_> = self.map_command.iter().collect();
-        fav_command.sort_by(|a, b| b.1.cmp(a.1));
-        for (command, &count) in fav_command.iter().take(4) {
-            View::typewriter_for_line(&format!(
-                "│   • {:<30}               {:<6}     │",
-                command.green().bold(),
-                count
-            ));
+            window.content("│");
+            let mut fav_command: Vec<_> = self.map_command_monthly[m as usize].iter().collect();
+            fav_command.sort_by(|a, b| b.1.cmp(a.1));
+            for (command, &count) in fav_command.iter().take(4) {
+                window.content(&format!("•  {:<47}{:<5} ", command.green(), count));
+            }
+            if m != month {
+                window.content("│");
+            }
         }
 
         window.empty();

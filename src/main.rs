@@ -27,6 +27,6 @@ fn main() {
     if args.year == 0 {
         stats.output_recent()
     } else {
-        stats.output_manual()
+        stats.output_annual()
     }
 }

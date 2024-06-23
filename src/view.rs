@@ -1,4 +1,3 @@
-use chrono::{Datelike, Local};
 use colored::*;
 use std::{
     io::{stdout, Write},
@@ -188,31 +187,13 @@ impl View {
 
     pub fn graph2(graph_list: &[usize]) -> String {
         let mut res = String::new();
-        let now = Local::now();
         for i in 0..12 {
-            let index = ((now.month() + i) % 12) as usize;
-            res += STR_MONTH[index];
+            res += STR_MONTH[i];
         }
-        res+="\n";
-
-        let start = if now.month() == 12 {
-            now.with_day(1)
-                .unwrap_or_default()
-                .with_month(1)
-                .unwrap_or_default()
-                .ordinal0()
-        } else {
-            now.with_day(1)
-                .unwrap_or_default()
-                .with_month(now.month() - 1)
-                .unwrap_or_default()
-                .with_year(now.year() - 1)
-                .unwrap_or_default()
-                .ordinal0()
-        };
+        res += "\n";
         for i in 0..=6 {
             for j in 0..=52 {
-                let ordinal = ((i + j * 7 + start) % 366) as usize;
+                let ordinal = i + j * 7;
                 if ordinal >= 365 {
                     res += " "
                 } else {
@@ -227,7 +208,7 @@ impl View {
                     )
                 }
             }
-            res += "  \n";
+            res += "   \n";
         }
         res
     }
@@ -247,10 +228,10 @@ impl View {
 
     pub fn histogram_command<T: ToString>(index: T, count: usize, max: usize) -> String {
         format!(
-            "{:<8} {}| {}",
+            "{:<9} {}| {}",
             index.to_string(),
             "#".repeat((count as f64 * (35.0 / max as f64)) as usize),
-            if count == max { count } else { count },
+            if count == max { count } else { count }
         )
     }
 
@@ -294,6 +275,7 @@ pub struct Window {
 
 impl Window {
     pub fn new(width: usize, fn_display: fn(&str)) -> Window {
+        View::line_break();
         Window {
             width,
             display: fn_display,
@@ -301,7 +283,7 @@ impl Window {
     }
 
     pub fn edge(&self) {
-        (self.display)(&format!(" {} \n", "―".repeat(self.width),))
+        (self.display)(&format!(" {} \n", "―".repeat(self.width - 1)))
     }
 
     pub fn empty(&self) {
