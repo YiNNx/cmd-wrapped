@@ -20,4 +20,4 @@ jobs:
       - name: Test
         run: cargo test --all-features --verbose
       - name: Lint
-        run: cargo clippy -- -D warnings -A clippy::unnecessary_to_owned --verbose
+        run: cargo clippy -- -D warnings -A clippy::unnecessary_to_owned
