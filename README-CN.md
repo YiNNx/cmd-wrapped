@@ -3,13 +3,12 @@
 </p>
 <div align="center">
     <h1>cmd-wrapped</h1>
-    <p>在命令行中查看你的过去一年！<br/><p/>
+    <p>👩‍💻 Rust-Based Unix Shell History Analyzer<br/><p/>
 	<div>
         <img alt="Stars" src="https://img.shields.io/github/stars/YiNNx/cmd-wrapped?style=flat-square&color=87e3dd&labelColor=444B5A">
         &nbsp;
       	<img alt="Release" src="https://img.shields.io/github/v/release/YiNNx/cmd-wrapped?style=flat-square&color=87e3dd&labelColor=444B5A">
     </div>
-    <img src="./assets/image-20240105171950987.png" width="80%" />
 </div>
 
 
@@ -22,8 +21,6 @@
   - bash
   - fish
   - atuin
-
-- 封面的 Ferris <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
 ## 如何使用
 
@@ -54,11 +51,14 @@ yay -S cmd-wrapped
 ### 参数
 
 ```shell
-cmd-wrapped [<year>] [-s <shell>] 
+# fetch current stats
+cmd-wrapped
 
-# e.g.
-cmd-wrapped               # for the past year & current shell
-cmd-wrapped 2024 -s zsh   # specify the year & the shell type
+# fetch annual shell history stats for a specific year
+cmd-wrapped 2024
+
+# specify the target shell
+cmd-wrapped -s <shell>
 ```
 
 所支持的 `<shell>` 选项：`zsh`, `bash`, `fish`, `atuin`. 

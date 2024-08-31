@@ -3,29 +3,23 @@
 </p>
 <div align="center">
     <h1>cmd-wrapped</h1>
-    <p>Find out what the past year looks like in command line!<br/><p/>
+    <p>👩‍💻 Rust-Based Unix Shell History Analyzer<br/><p/>
 	<div>
         <img alt="Stars" src="https://img.shields.io/github/stars/YiNNx/cmd-wrapped?style=flat-square&color=87e3dd&labelColor=444B5A">
         &nbsp;
       	<img alt="Release" src="https://img.shields.io/github/v/release/YiNNx/cmd-wrapped?style=flat-square&color=87e3dd&labelColor=444B5A">
     </div>
-    <img src="./assets/image-20240105171950987.png" width="80%" />
 </div>
-
-
-
 
 ## Features
 
-- Analyze the commandline activity distribution for months, weekdays and hours, as well as frequently-used commands over the past years.
+- Analyze the commandline activity distribution for months, days and hours
 - Github-style command distribution graph
 - Supported shell / history tool:
   - zsh
   - bash
   - fish
   - atuin
-
-- A cute Ferris on the cover  <img style="width:25px;vertical-align: bottom;" src="./assets/ferris_hello.gif" />
 
 ## How to Use
 
@@ -36,7 +30,7 @@
 ```shell
 cargo install cmd-wrapped
 ```
-   
+
 - #### Download from [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest)
 
 Unzip, chmod and run the binary file in the terminal.
@@ -56,11 +50,14 @@ yay -S cmd-wrapped
 ### Usage
 
 ```shell
-cmd-wrapped [<year>] [-s <shell>] 
+# fetch current stats
+cmd-wrapped
 
-# e.g.
-cmd-wrapped               # for the past year & current shell
-cmd-wrapped 2024 -s zsh   # specify the year & the shell type
+# fetch annual shell history stats for a specific year
+cmd-wrapped 2024
+
+# specify the target shell
+cmd-wrapped -s <shell>
 ```
 
 Supported options for `<shell>` : `zsh`, `bash`, `fish`, `atuin`. 
