@@ -24,5 +24,9 @@ fn main() {
             .for_each(|command| stats.analyze(command));
     }
 
-    stats.output()
+    if args.year == 0 {
+        stats.output_recent()
+    } else {
+        stats.output_annual()
+    }
 }

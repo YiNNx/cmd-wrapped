@@ -1,4 +1,3 @@
-use chrono::{Datelike, Local};
 use clap::{arg, command, value_parser, Arg};
 use std::env;
 
@@ -8,16 +7,6 @@ pub struct Cli {
 }
 
 impl Cli {
-    fn default_year() -> i32 {
-        let now = Local::now();
-        let year = now.year();
-        if now.month() <= 3 {
-            year - 1
-        } else {
-            year
-        }
-    }
-
     fn current_shell() -> String {
         env::var("SHELL")
             .unwrap_or("unknown".into())
@@ -32,7 +21,7 @@ impl Cli {
             .arg(
                 Arg::new("year")
                     .required(false)
-                    .help("Specify the year")
+                    .help("Display statistics for the specified year")
                     .value_parser(value_parser!(i32)),
             )
             .arg(
@@ -43,7 +32,10 @@ impl Cli {
             )
             .get_matches();
 
-        let year = *args.get_one::<i32>("year").unwrap_or(&Self::default_year());
+        let year = args
+            .get_one::<i32>("year")
+            .map(|ptr| ptr.to_owned())
+            .unwrap_or_default();
         let shell = args
             .get_one::<String>("shell")
             .map(|ptr| ptr.to_owned())

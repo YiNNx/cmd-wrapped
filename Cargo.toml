@@ -3,7 +3,7 @@ name = "cmd-wrapped"
 version = "0.3.0"
 edition = "2021"
 authors = ["YiNNx <yinnnxt@gmail.com>"]
-description = "A CLI to view your command line stats for the past years. Support zsh, bash, fish as well as atuin."
+description = "A CLI tool to view Unix shell history statistics, with support for zsh, bash, fish, and atuin."
 license = "MIT"
 repository = "https://github.com/YiNNx/cmd-wrapped"
 readme = "README.md"
@@ -18,4 +18,4 @@ lazy_static = "1.4.0"
 colored = "2.1.0"
 num-traits = "0.2.17"
 clap = { version = "4.4.11", features = ["cargo"] }
-strum = { version = "0.25", features = ["derive"] }
+strum = { version = "0.26.2", features = ["derive"] }
