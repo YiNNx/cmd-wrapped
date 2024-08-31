@@ -1,4 +1,4 @@
-use chrono::{DateTime, Datelike, Local, NaiveDate, Timelike};
+use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, Timelike};
 use colored::*;
 use num_traits::cast::FromPrimitive;
 use std::collections::HashMap;
@@ -24,6 +24,7 @@ pub struct Statistic {
     map_command_monthly: Vec<HashMap<String, usize>>,
     map_command_annual: HashMap<String, usize>,
 
+    today_command_count: usize,
     command_count: usize,
     command_count_total: usize,
 
@@ -55,11 +56,12 @@ impl Statistic {
         self.command_count_total += 1;
 
         if let Some(time) = c.time {
+            let now = Local::now();
             let month = time.month0() as usize;
             self.list_month_total[month] += 1;
 
             if (self.year != 0 && time.year() != self.year)
-                || (self.year == 0 && time.year() != Local::now().year())
+                || (self.year == 0 && time.year() != now.year())
             {
                 return;
             }
@@ -88,7 +90,9 @@ impl Statistic {
                 .and_modify(|counter| *counter += 1)
                 .or_insert(1);
 
-            if self.year == 0 && time.ordinal0() == Local::now().ordinal0() {
+            let delta = if now.hour() < 6 { 18 } else { -6 };
+            if self.year == 0 && (time + Duration::hours(delta)).ordinal0() == now.ordinal0() {
+                self.today_command_count += 1;
                 self.list_daytime_today[hour] += 1;
                 self.map_command_daily
                     .entry(c.command.clone())
@@ -270,7 +274,7 @@ impl Statistic {
         let max = list.iter().max().map(|p| *p).unwrap_or_default();
         for row in 0..=4 {
             for hour in 0..list.len() {
-                let h = (7 + hour) % list.len();
+                let h = (6 + hour) % list.len();
                 res += if (max / 5) * (4 - row) < list[h] {
                     "##"
                 } else {
@@ -280,19 +284,22 @@ impl Statistic {
             res += "\n"
         }
         res += &format!("{}\n", "-".repeat(48));
-        res += &format!("  8   10  12  14  16  18  20  22  0   2   4   6\n");
+        res += &format!("6   8   10  12  14  16  18  20  22  0   2   4  \n");
         res
     }
 
     pub fn output_recent(&self) {
-        let window = Window::new(64, View::display);
+        let mut window = Window::new(61, 6, View::display);
         window.edge();
         window.break_line();
 
         window.content(&format!(
-            "Today - {} commands / {} unique commands",
-            self.list_day[Local::now().ordinal0() as usize],
-            self.map_command_daily.len()
+            "{:<71}",
+            &format!(
+                "Today - {} commands / {} unique commands",
+                self.today_command_count.to_string().cyan().bold(),
+                self.map_command_daily.len().to_string().cyan().bold()
+            )
         ));
         window.break_line();
 
@@ -300,16 +307,26 @@ impl Statistic {
         window.content(&today);
         window.break_line();
 
-        let mut fav_command: Vec<_> = self.map_command_daily.iter().collect();
-        fav_command.sort_by(|a, b| b.1.cmp(a.1));
-        let max = fav_command.get(0).map(|(_, b)| **b).unwrap_or_default();
-        for (command, &count) in fav_command.iter().take(5) {
-            window.content(&View::histogram_command(command, count, max))
+        let mut fav_commands: Vec<_> = self.map_command_daily.iter().collect();
+        fav_commands.sort_by(|a, b| b.1.cmp(a.1));
+        let top_fav_commands: Vec<_> = fav_commands.iter().take(5).collect();
+        let max = top_fav_commands
+            .get(0)
+            .map(|(_, b)| **b)
+            .unwrap_or_default();
+        let len_max = top_fav_commands
+            .iter()
+            .map(|(key, _)| key.len())
+            .max()
+            .unwrap_or_default();
+        for (command, &count) in top_fav_commands {
+            window.content(&View::histogram_command(command, count, max, len_max))
         }
 
         window.break_line();
         window.edge();
         window.break_line();
+        window.padding(4);
 
         window.content(&format!(
             "This year - {} commands / {} unique commands",
@@ -328,15 +345,15 @@ impl Statistic {
             }
             window.content(&format!(
                 "○  {} - {} commands / {} unique commands",
-                STR_MONTH[m as usize],
-                self.list_month[m as usize],
+                STR_MONTH[m as usize].trim(),
+                self.list_month[m as usize].to_string(),
                 self.map_command_monthly[m as usize].len()
             ));
             window.content("│");
             let mut fav_command: Vec<_> = self.map_command_monthly[m as usize].iter().collect();
             fav_command.sort_by(|a, b| b.1.cmp(a.1));
             for (command, &count) in fav_command.iter().take(4) {
-                window.content(&format!("•  {:<47}{:<5} ", command.green(), count));
+                window.content(&format!("•  {:<44}{:<5} ", command, count));
             }
             if m == month {
                 window.content("│");

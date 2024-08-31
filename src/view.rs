@@ -191,7 +191,7 @@ impl View {
         for i in 0..12 {
             res += STR_MONTH[i];
         }
-        res += "\n";
+        res = res + "\n";
         for i in 0..=6 {
             for j in 0..=52 {
                 let ordinal = i + j * 7;
@@ -209,7 +209,7 @@ impl View {
                     )
                 }
             }
-            res += "   \n";
+            res += "\n";
         }
         res
     }
@@ -220,19 +220,25 @@ impl View {
             index.to_string().bold(),
             "#".repeat(count / (max / 90 + 1)).dimmed().bold(),
             if count == max {
-                count.to_string().green().bold()
+                count.to_string()
             } else {
-                count.to_string().bold()
+                count.to_string()
             },
         ));
     }
 
-    pub fn histogram_command<T: ToString>(index: T, count: usize, max: usize) -> String {
+    pub fn histogram_command<T: ToString>(
+        index: T,
+        count: usize,
+        len: usize,
+        len_max: usize,
+    ) -> String {
         format!(
-            "{:<9} {}| {}",
+            "{:<len$}  {}| {}",
             index.to_string(),
-            "#".repeat((count as f64 * (35.0 / max as f64)) as usize),
+            "#".repeat((count as f64 * ((41 - len_max) as f64 / len as f64)) as usize),
             count,
+            len = len_max,
         )
     }
 
@@ -263,24 +269,31 @@ impl View {
 
     pub fn hint_finish(year: i32) {
         Self::sub_title(&format!("All {} command line stats wrapped!", year));
-        Self::typewriter_for_line(
-            "Specify other years with arguments, such as `./cmd-wrapped 2022`\n\n",
-        );
+        Self::typewriter_for_line(&format!(
+            "Specify other years with arguments, such as `./cmd-wrapped {}`\n\n",
+            year - 1
+        ));
     }
 }
 
 pub struct Window {
     width: usize,
+    padding: usize,
     display: fn(&str),
 }
 
 impl Window {
-    pub fn new(width: usize, fn_display: fn(&str)) -> Window {
+    pub fn new(width: usize, padding: usize, fn_display: fn(&str)) -> Window {
         View::line_break();
         Window {
             width,
+            padding,
             display: fn_display,
         }
+    }
+
+    pub fn padding(&mut self, padding: usize) {
+        self.padding = padding
     }
 
     pub fn edge(&self) {
@@ -294,9 +307,11 @@ impl Window {
     pub fn content(&self, s: &str) {
         for c in s.lines() {
             (self.display)(&format!(
-                "│    {:<width$}    │\n",
+                "│{}{:<width$}{}│\n",
+                " ".repeat(self.padding),
                 c,
-                width = self.width - 8
+                " ".repeat(self.padding),
+                width = self.width - self.padding * 2,
             ))
         }
     }
