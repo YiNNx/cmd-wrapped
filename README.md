@@ -31,18 +31,27 @@
 
 ### Installation
 
-- Install using [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
+- #### Using [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
 
-   ```shell
-   cargo install cmd-wrapped
-   cmd-wrapped
-   ```
+```shell
+cargo install cmd-wrapped
+```
    
-- Download from [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest), unzip and run the binary file in the terminal:
+- #### Download from [Release](https://github.com/YiNNx/cmd-wrapped/releases/latest)
 
-   ```shell
-   ./cmd-wrapped
-   ```
+Unzip, chmod and run the binary file in the terminal.
+
+- #### Nix❄️
+
+```nix
+nix run nixpkgs#cmd-wrapped
+```
+
+- #### Arch
+
+```shell
+yay -S cmd-wrapped
+```
 
 ### Usage
 
