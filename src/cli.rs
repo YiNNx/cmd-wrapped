@@ -21,7 +21,7 @@ impl Cli {
             .arg(
                 Arg::new("year")
                     .required(false)
-                    .help("Specify the year")
+                    .help("Display statistics for the specified year")
                     .value_parser(value_parser!(i32)),
             )
             .arg(
