@@ -44,7 +44,7 @@ impl Command {
             .iter()
             .find(|s| !s.is_empty() || !s.contains('=') && !s.contains('{'))
             .ok_or("invalid command")?;
-        self.command = c.to_owned();
+        c.clone_into(&mut self.command);
         self.arguments = args;
         Ok(self)
     }

@@ -188,10 +188,10 @@ impl View {
 
     pub fn graph2(graph_list: &[usize]) -> String {
         let mut res = String::new();
-        for i in 0..12 {
-            res += STR_MONTH[i];
+        for str_month in STR_MONTH {
+            res += str_month;
         }
-        res = res + "\n";
+        res += "\n";
         for i in 0..=6 {
             for j in 0..=52 {
                 let ordinal = i + j * 7;
@@ -219,11 +219,7 @@ impl View {
             "{:<3} {}| {}",
             index.to_string().bold(),
             "#".repeat(count / (max / 90 + 1)).dimmed().bold(),
-            if count == max {
-                count.to_string()
-            } else {
-                count.to_string()
-            },
+            count,
         ));
     }
 

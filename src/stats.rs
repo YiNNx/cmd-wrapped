@@ -77,7 +77,7 @@ impl Statistic {
             self.command_count += 1;
 
             if self.first_command_time > time {
-                self.first_command = c.command_raw.clone();
+                self.first_command.clone_from(&c.command_raw);
                 self.first_command_time = time;
             }
 
@@ -268,10 +268,10 @@ impl Statistic {
         View::wait();
     }
 
-    pub fn daytime_graph(list: &Vec<usize>) -> String {
+    pub fn daytime_graph(list: &[usize]) -> String {
         let mut res = String::new();
 
-        let max = list.iter().max().map(|p| *p).unwrap_or_default();
+        let max = list.iter().max().copied().unwrap_or_default();
         for row in 0..=4 {
             for hour in 0..list.len() {
                 let h = (6 + hour) % list.len();
@@ -284,7 +284,7 @@ impl Statistic {
             res += "\n"
         }
         res += &format!("{}\n", "-".repeat(48));
-        res += &format!("6   8   10  12  14  16  18  20  22  0   2   4  \n");
+        res += "6   8   10  12  14  16  18  20  22  0   2   4  \n";
         res
     }
 
@@ -310,8 +310,7 @@ impl Statistic {
         let mut fav_commands: Vec<_> = self.map_command_daily.iter().collect();
         fav_commands.sort_by(|a, b| b.1.cmp(a.1));
         let top_fav_commands: Vec<_> = fav_commands.iter().take(5).collect();
-        let max = top_fav_commands
-            .get(0)
+        let max = top_fav_commands.first()
             .map(|(_, b)| **b)
             .unwrap_or_default();
         let len_max = top_fav_commands
@@ -346,7 +345,7 @@ impl Statistic {
             window.content(&format!(
                 "○  {} - {} commands / {} unique commands",
                 STR_MONTH[m as usize].trim(),
-                self.list_month[m as usize].to_string(),
+                self.list_month[m as usize],
                 self.map_command_monthly[m as usize].len()
             ));
             window.content("│");
