@@ -287,18 +287,18 @@ impl Statistic {
     pub fn output_recent(&self) {
         let window = Window::new(64, View::display);
         window.edge();
-        window.empty();
+        window.break_line();
 
         window.content(&format!(
             "Today - {} commands / {} unique commands",
             self.list_day[Local::now().ordinal0() as usize],
             self.map_command_daily.len()
         ));
-        window.empty();
+        window.break_line();
 
         let today = Self::daytime_graph(&self.list_daytime_today);
         window.content(&today);
-        window.empty();
+        window.break_line();
 
         let mut fav_command: Vec<_> = self.map_command_daily.iter().collect();
         fav_command.sort_by(|a, b| b.1.cmp(a.1));
@@ -307,22 +307,22 @@ impl Statistic {
             window.content(&View::histogram_command(command, count, max))
         }
 
-        window.empty();
+        window.break_line();
         window.edge();
-        window.empty();
+        window.break_line();
 
         window.content(&format!(
             "This year - {} commands / {} unique commands",
             self.command_count,
             self.map_command_annual.len()
         ));
-        window.empty();
+        window.break_line();
 
         window.content(&View::graph2(&self.list_day));
-        window.empty();
+        window.break_line();
 
         let month = Local::now().month0() as isize;
-        for m in month - 1..=month {
+        for m in (month - 1..=month).rev() {
             if m < 0 {
                 continue;
             }
@@ -338,12 +338,12 @@ impl Statistic {
             for (command, &count) in fav_command.iter().take(4) {
                 window.content(&format!("•  {:<47}{:<5} ", command.green(), count));
             }
-            if m != month {
+            if m == month {
                 window.content("│");
             }
         }
 
-        window.empty();
+        window.break_line();
         window.edge();
     }
 }

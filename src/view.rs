@@ -182,6 +182,7 @@ impl View {
             }
             res += "   │\n";
         }
+        res += &format!(" {}", "_".repeat(109));
         res
     }
 
@@ -231,7 +232,7 @@ impl View {
             "{:<9} {}| {}",
             index.to_string(),
             "#".repeat((count as f64 * (35.0 / max as f64)) as usize),
-            if count == max { count } else { count }
+            count,
         )
     }
 
@@ -286,7 +287,7 @@ impl Window {
         (self.display)(&format!(" {} \n", "―".repeat(self.width - 1)))
     }
 
-    pub fn empty(&self) {
+    pub fn break_line(&self) {
         (self.display)(&format!("│{}│\n", " ".repeat(self.width)))
     }
 
