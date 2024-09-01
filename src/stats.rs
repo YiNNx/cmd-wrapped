@@ -1,11 +1,10 @@
 use chrono::{DateTime, Datelike, Duration, Local, NaiveDate, Timelike};
-use colored::*;
 use num_traits::cast::FromPrimitive;
 use std::collections::HashMap;
 
 use crate::{
     parser::Command,
-    view::{View, Window, STR_MONTH, STR_WEEKDAY},
+    view::{Component, View, STR_WEEKDAY},
 };
 
 #[derive(Default)]
@@ -268,50 +267,25 @@ impl Statistic {
         View::wait();
     }
 
-    pub fn daytime_graph(list: &[usize]) -> String {
-        let mut res = String::new();
-
-        let max = list.iter().max().copied().unwrap_or_default();
-        for row in 0..=4 {
-            let mut s = String::new();
-            for hour in 0..list.len() {
-                let h = (6 + hour) % list.len();
-                s += if (max / 5) * (4 - row) < list[h] {
-                    "▉ "
-                } else {
-                    "  "
-                }
-            }
-            res += &s.cyan().to_string();
-            res += " \n";
-        }
-        res += &format!("{}\n", "-".repeat(48));
-        res += "6   8   10  12  14  16  18  20  22  0   2   4  \n";
-        res
-    }
-
     pub fn output_recent(&self) {
-        let mut window = Window::new(61, 6, View::display);
-        window.edge();
-        window.break_line();
+        let mut component = Component::new(61, 6, View::display);
+        component.edge();
+        component.break_line();
 
-        window.content(&format!(
-            "{:<71}",
-            &format!(
-                "Today - {} commands / {} unique commands",
-                self.today_command_count.to_string().green().bold(),
-                self.map_command_daily.len().to_string().green().bold()
-            )
+        component.content(&format!(
+            "Today - {} commands / {} unique commands",
+            self.today_command_count,
+            self.map_command_daily.len()
         ));
-        window.break_line();
+        component.break_line();
 
-        let today = Self::daytime_graph(&self.list_daytime_today);
-        window.content(&today);
-        window.break_line();
+        component.daytime_graph(&self.list_daytime_today);
+        component.break_line();
 
         let mut fav_commands: Vec<_> = self.map_command_daily.iter().collect();
         fav_commands.sort_by(|a, b| b.1.cmp(a.1));
         let top_fav_commands: Vec<_> = fav_commands.iter().take(5).collect();
+
         let max = top_fav_commands
             .first()
             .map(|(_, b)| **b)
@@ -322,50 +296,43 @@ impl Statistic {
             .max()
             .unwrap_or_default();
         for (command, &count) in top_fav_commands {
-            window.content(&View::histogram_command(command, count, max, len_max))
+            component.command_rank(command, count, max, len_max);
         }
 
-        window.break_line();
-        window.edge();
-        window.break_line();
-        window.padding(4);
+        component.break_line();
+        component.edge();
+        component.padding(4);
+        component.break_line();
 
-        window.content(&format!(
-            "{:<75}",
-            &format!(
-                "This year - {} commands / {} unique commands",
-                self.command_count.to_string().green().bold(),
-                self.map_command_annual.len().to_string().green().bold()
-            )
+        component.content(&format!(
+            "This year - {} commands / {} unique commands",
+            self.command_count,
+            self.map_command_annual.len()
         ));
-        window.break_line();
+        component.break_line();
 
-        window.content(&View::graph2(&self.list_day));
-        window.break_line();
+        component.graph2(&self.list_day);
+        component.break_line();
 
         let month = Local::now().month0() as isize;
         for m in (month - 1..=month).rev() {
             if m < 0 {
                 continue;
             }
-            window.content(&format!(
-                "○  {} - {} commands / {} unique commands",
-                STR_MONTH[m as usize].trim(),
+            let mut monthly_commands: Vec<_> =
+                self.map_command_monthly[m as usize].iter().collect();
+            monthly_commands.sort_by(|a, b| b.1.cmp(a.1));
+            let fav_commands: Vec<_> = monthly_commands.iter().take(4).cloned().collect();
+            component.monthly_stat(
+                m,
                 self.list_month[m as usize],
-                self.map_command_monthly[m as usize].len()
-            ));
-            window.content("│");
-            let mut fav_command: Vec<_> = self.map_command_monthly[m as usize].iter().collect();
-            fav_command.sort_by(|a, b| b.1.cmp(a.1));
-            for (command, &count) in fav_command.iter().take(4) {
-                window.content(&format!("•  {:<44}{:<5} ", command.green().bold(), count));
-            }
-            if m == month {
-                window.content("│");
-            }
+                self.map_command_monthly[m as usize].len(),
+                fav_commands,
+                m != month,
+            );
         }
 
-        window.break_line();
-        window.edge();
+        component.break_line();
+        component.edge();
     }
 }

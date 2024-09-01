@@ -186,34 +186,6 @@ impl View {
         res
     }
 
-    pub fn graph2(graph_list: &[usize]) -> String {
-        let mut res = String::new();
-        for str_month in STR_MONTH {
-            res += str_month;
-        }
-        res += "\n";
-        for i in 0..=6 {
-            for j in 0..=52 {
-                let ordinal = i + j * 7;
-                if ordinal >= 365 {
-                    res += " "
-                } else {
-                    res += &format!(
-                        "{}",
-                        match graph_list[ordinal] {
-                            0 => " ".normal(),
-                            1..=30 => "●".cyan().dimmed(),
-                            31..=50 => "●".cyan(),
-                            _ => "●".bright_cyan().bold(),
-                        }
-                    )
-                }
-            }
-            res += "\n";
-        }
-        res
-    }
-
     pub fn histogram<T: ToString>(index: T, count: usize, max: usize) {
         Self::typewriter_for_line(&format!(
             "{:<3} {}| {}",
@@ -221,26 +193,6 @@ impl View {
             "#".repeat(count / (max / 90 + 1)).dimmed().bold(),
             count,
         ));
-    }
-
-    pub fn histogram_command<T: ToString>(
-        index: T,
-        count: usize,
-        max: usize,
-        len_max: usize,
-    ) -> String {
-        format!(
-            "{:<len$}  {:<len2$}",
-            index.to_string().green().bold(),
-            "▮"
-                .repeat((count as f64 * ((41 - len_max) as f64 / max as f64)) as usize)
-                .dimmed()
-                .to_string()
-                + " "
-                + &count.to_string(),
-            len = len_max,
-            len2 = 55 - len_max,
-        )
     }
 
     pub fn histogram_with_total<T: ToString>(index: T, count: usize, total: usize, max: usize) {
@@ -277,16 +229,16 @@ impl View {
     }
 }
 
-pub struct Window {
+pub struct Component {
     width: usize,
     padding: usize,
     display: fn(&str),
 }
 
-impl Window {
-    pub fn new(width: usize, padding: usize, fn_display: fn(&str)) -> Window {
+impl Component {
+    pub fn new(width: usize, padding: usize, fn_display: fn(&str)) -> Component {
         View::line_break();
-        Window {
+        Component {
             width,
             padding,
             display: fn_display,
@@ -314,6 +266,103 @@ impl Window {
                 " ".repeat(self.padding),
                 width = self.width - self.padding * 2,
             ))
+        }
+    }
+
+    pub fn daytime_graph(&self, list: &[usize]) {
+        let mut output = String::new();
+        let max = list.iter().max().copied().unwrap_or_default();
+        for row in 0..=4 {
+            let mut line = String::new();
+            for hour in 0..list.len() {
+                let h = (6 + hour) % list.len();
+                line += if (max / 5) * (4 - row) < list[h] {
+                    "▉ "
+                } else {
+                    "  "
+                }
+            }
+            output += &line.cyan().dimmed().to_string();
+            output += " \n";
+        }
+        output += &format!("{}\n", "-".repeat(48));
+        output += "6   8   10  12  14  16  18  20  22  0   2   4  \n";
+        self.content(&output)
+    }
+
+    pub fn command_rank<T: ToString>(
+        &self,
+        index: T,
+        current_count: usize,
+        max_count: usize,
+        command_padding: usize,
+    ) {
+        let bar_max_len = self.width - 20;
+        self.content(&format!(
+            "{:<command_padding$}  {:<right_len$}",
+            index.to_string().green().bold(),
+            "▮"
+                .repeat(
+                    (current_count as f64
+                        * ((bar_max_len - command_padding) as f64 / max_count as f64))
+                        as usize
+                )
+                .dimmed()
+                .to_string()
+                + " "
+                + &current_count.to_string(),
+            right_len = self.width - 6 - command_padding,
+        ))
+    }
+
+    pub fn graph2(&self, graph_list: &[usize]) {
+        let mut output = String::new();
+        for str_month in STR_MONTH {
+            output += str_month;
+        }
+        output += "\n";
+        for i in 0..=6 {
+            for j in 0..=52 {
+                let ordinal = i + j * 7;
+                if ordinal >= 365 {
+                    output += " "
+                } else {
+                    output += &format!(
+                        "{}",
+                        match graph_list[ordinal] {
+                            0 => " ".normal(),
+                            1..=20 => "●".cyan().dimmed(),
+                            21..=50 => "●".cyan(),
+                            _ => "●".bright_cyan(),
+                        }
+                    )
+                }
+            }
+            output += "\n";
+        }
+        self.content(&output)
+    }
+
+    pub fn monthly_stat(
+        &self,
+        month: isize,
+        command_count: usize,
+        unique_count: usize,
+        fav_commands: Vec<(&String, &usize)>,
+        end: bool,
+    ) {
+        self.content(&format!(
+            "○  {} - {} commands / {} unique commands",
+            STR_MONTH[month as usize].trim(),
+            command_count,
+            unique_count
+        ));
+        self.content("│");
+        for (command, &count) in fav_commands {
+            self.content(&format!("•  {:<44}{:<6}", command.green().bold(), count));
+        }
+        if !end {
+            self.content("│");
         }
     }
 }
