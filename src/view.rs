@@ -226,15 +226,20 @@ impl View {
     pub fn histogram_command<T: ToString>(
         index: T,
         count: usize,
-        len: usize,
+        max: usize,
         len_max: usize,
     ) -> String {
         format!(
-            "{:<len$}  {}| {}",
-            index.to_string(),
-            "#".repeat((count as f64 * ((41 - len_max) as f64 / len as f64)) as usize),
-            count,
+            "{:<len$}  {:<len2$}",
+            index.to_string().green().bold(),
+            "▮"
+                .repeat((count as f64 * ((41 - len_max) as f64 / max as f64)) as usize)
+                .dimmed()
+                .to_string()
+                + " "
+                + &count.to_string(),
             len = len_max,
+            len2 = 55 - len_max,
         )
     }
 
