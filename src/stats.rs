@@ -322,7 +322,7 @@ impl Statistic {
             let mut monthly_commands: Vec<_> =
                 self.map_command_monthly[m as usize].iter().collect();
             monthly_commands.sort_by(|a, b| b.1.cmp(a.1));
-            let fav_commands: Vec<_> = monthly_commands.iter().take(4).cloned().collect();
+            let fav_commands: Vec<_> = monthly_commands.iter().take(3).cloned().collect();
             component.monthly_stat(
                 m,
                 self.list_month[m as usize],
@@ -334,5 +334,6 @@ impl Statistic {
 
         component.break_line();
         component.edge();
+        println!()
     }
 }

@@ -305,7 +305,7 @@ impl Component {
                 .repeat(
                     (current_count as f64
                         * ((bar_max_len - command_padding) as f64 / max_count as f64))
-                        as usize
+                        .round() as usize
                 )
                 .dimmed()
                 .to_string()
@@ -359,7 +359,7 @@ impl Component {
         ));
         self.content("│");
         for (command, &count) in fav_commands {
-            self.content(&format!("•  {:<44}{:<6}", command.green().bold(), count));
+            self.content(&format!("•  {:<45}{:<5}", command.green().bold(), count));
         }
         if !end {
             self.content("│");
