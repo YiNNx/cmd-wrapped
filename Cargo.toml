@@ -1,6 +1,6 @@
 [package]
 name = "cmd-wrapped"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["YiNNx <yinnnxt@gmail.com>"]
 description = "A CLI tool to view Unix shell history statistics, with support for zsh, bash, fish, and atuin."
