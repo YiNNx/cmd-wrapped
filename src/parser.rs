@@ -42,7 +42,7 @@ impl Command {
         let args: Vec<_> = command.split_whitespace().map(String::from).collect();
         let c = args
             .iter()
-            .find(|s| !s.is_empty() || !s.contains('=') && !s.contains('{'))
+            .find(|s| !s.is_empty() && !s.contains('=') && !s.contains('{'))
             .ok_or("invalid command")?;
         c.clone_into(&mut self.command);
         self.arguments = args;
