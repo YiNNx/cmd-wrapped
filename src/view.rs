@@ -211,7 +211,7 @@ impl View {
         ));
     }
 
-    pub fn display_count_and_total(item: &String, count: usize, total: usize) {
+    pub fn display_count_and_total(item: &str, count: usize, total: usize) {
         View::typewriter_for_line(&format!(
             "- {:<50} {:<6}{}",
             item.green().bold(),

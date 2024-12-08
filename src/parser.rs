@@ -24,11 +24,11 @@ pub struct Command {
 
 impl Command {
     fn from(commandline: String, time: Option<DateTime<Local>>) -> Self {
-        return Command {
+        Command {
             command_raw: commandline.trim().into(),
             time,
             ..Default::default()
-        };
+        }
     }
 
     fn parse_line(mut self) -> Result<Self, Box<dyn Error>> {
