@@ -48,7 +48,7 @@ impl HistoryProvider {
             HistoryProvider::Fish => {
                 let output = Command::new("fish")
                     .arg("-c")
-                    .arg("history -show-time='%s;'")
+                    .arg("history --show-time='%s;'")
                     .output()?;
                 Ok(Box::new(Cursor::new(output.stdout)))
             }
