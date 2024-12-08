@@ -16,6 +16,8 @@ pub enum HistoryProvider {
     Atuin,
     #[strum(serialize = "fish")]
     Fish,
+    #[strum(serialize = "nu")]
+    Nu,
 }
 
 impl HistoryProvider {
@@ -52,6 +54,14 @@ impl HistoryProvider {
                     .output()?;
                 Ok(Box::new(Cursor::new(output.stdout)))
             }
+            HistoryProvider::Nu => {
+                let output = Command::new("nu")
+                .arg("-l")
+                .arg("-c")
+                .arg("history | default [] | each {|i| $\"($i.start_timestamp);($i.command)\"} | table --flatten -i false --theme none")
+                .output()?;
+                Ok(Box::new(Cursor::new(output.stdout)))
+            }
         }
     }
 }
@@ -75,7 +85,10 @@ impl Iterator for History {
 
     fn next(&mut self) -> Option<Self::Item> {
         match self.provider {
-            HistoryProvider::Zsh | HistoryProvider::Atuin | HistoryProvider::Fish => {
+            HistoryProvider::Zsh
+            | HistoryProvider::Atuin
+            | HistoryProvider::Nu
+            | HistoryProvider::Fish => {
                 let mut block = String::new();
                 let mut buf = vec![];
                 loop {
