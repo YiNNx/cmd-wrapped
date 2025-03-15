@@ -57,7 +57,7 @@ Supported options for `<shell>` : `zsh`, `bash`, `fish`, `atuin`.
 > In some cases, cmd-wrapped may fail to output correct data (such as [all outputs being 0](https://github.com/YiNNx/cmd-wrapped/issues/3)). This is because it relies on the timestamp track for each command, which sometimes requires configuring specific options extraly:
 >
 > - For Zsh - [EXTENDED_HISTORY](https://zsh.sourceforge.io/Doc/Release/Options.html#History) (oh-my-zsh has it enabled by default)
-> - For Bash - [HISTTIMEFORMAT](https://www.gnu.org/software/bash/manual/bash.html#index-HISTTIMEFORMAT)
+> - For Bash - [HISTTIMEFORMAT](https://www.gnu.org/software/bash/manual/bash.html#index-HISTTIMEFORMAT) (To enable it, run this command: `echo 'HISTTIMEFORMAT="%Y/%m/%d %H:%M:%S "' >> ~/.bashrc`  )
 >
 > **Commands executed before configuring the option won't be recorded with a timestamp and this will affect cmd-wrapped’s stats**.
 
