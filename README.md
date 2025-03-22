@@ -9,7 +9,7 @@
 	&nbsp;
 </p>
 
-A CLI to view your shell history stats, with support for zsh, bash, fish, and atuin.
+A CLI to view your shell history stats, with support for zsh, bash, fish, nushell, and atuin.
 
 <img src="https://github.com/user-attachments/assets/fa34598f-3b8c-4f90-8569-7724df787b1c" height="750" />
 
@@ -50,7 +50,7 @@ cmd-wrapped 2024
 cmd-wrapped -s <shell>
 ```
 
-Supported options for `<shell>` : `zsh`, `bash`, `fish`, `atuin`. 
+Supported options for `<shell>` : `zsh`, `bash`, `fish`, `nu` (nushell), `atuin`. 
 
 > [!NOTE]
 >
@@ -58,6 +58,7 @@ Supported options for `<shell>` : `zsh`, `bash`, `fish`, `atuin`.
 >
 > - For Zsh - [EXTENDED_HISTORY](https://zsh.sourceforge.io/Doc/Release/Options.html#History) (oh-my-zsh has it enabled by default)
 > - For Bash - [HISTTIMEFORMAT](https://www.gnu.org/software/bash/manual/bash.html#index-HISTTIMEFORMAT)
+> - For Nushell - Enable SQLite history storage: `$env.config.history.file_format = "sqlite"`
 >
 > **Commands executed before configuring the option won't be recorded with a timestamp and this will affect cmd-wrapped’s stats**.
 
