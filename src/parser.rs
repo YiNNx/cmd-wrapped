@@ -72,6 +72,7 @@ impl CommandParser {
             HistoryProvider::Bash => self.parse_bash_raw(),
             HistoryProvider::Atuin => self.parse_atuin_raw(),
             HistoryProvider::Fish => self.parse_fish_raw(),
+            HistoryProvider::Nu => self.parse_nu_raw(),
         }?;
         let commands_splitted = RE_COMMAND.split(&commands_combined);
         for commandline in commands_splitted {
@@ -115,17 +116,30 @@ impl CommandParser {
         ))
     }
 
+    pub fn parse_nu_raw(&self) -> Result<ParsingData, Box<dyn Error>> {
+        let (time_raw, commands_raw) = self
+            .raw
+            .split_once(';')
+            .ok_or("failed to split nu command")?;
+
+        let time = NaiveDateTime::parse_and_remainder(time_raw.trim(), "%Y-%m-%d %H:%M:%S")
+            .ok()
+            .and_then(|naive_time| Local.from_local_datetime(&naive_time.0).single());
+
+        Ok((commands_raw.trim().into(), time))
+    }
+
     pub fn parse_atuin_raw(&self) -> Result<ParsingData, Box<dyn Error>> {
         let (time_raw, commands_raw) = self
             .raw
             .split_once(';')
             .ok_or("failed to split atuin command")?;
 
-        let time = NaiveDateTime::parse_from_str(time_raw, "%Y-%m-%d %H:%M:%S")
+        let time = NaiveDateTime::parse_from_str(time_raw.trim(), "%Y-%m-%d %H:%M:%S")
             .ok()
             .and_then(|naive_time| Local.from_local_datetime(&naive_time).single());
 
-        Ok((commands_raw.into(), time))
+        Ok((commands_raw.trim().into(), time))
     }
 
     pub fn parse_fish_raw(&self) -> Result<ParsingData, Box<dyn Error>> {
