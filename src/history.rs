@@ -6,7 +6,7 @@ use std::{
     str::FromStr,
 };
 
-#[derive(Debug, Clone, strum::Display, strum::EnumString)]
+#[derive(Debug, Clone, strum::Display, strum::EnumString, Eq, PartialEq)]
 pub enum HistoryProvider {
     #[strum(serialize = "zsh")]
     Zsh,
@@ -84,6 +84,31 @@ impl Iterator for History {
     type Item = String;
 
     fn next(&mut self) -> Option<Self::Item> {
+        /// Remove metadata from Zsh's escaped history for non-ASCII.
+        ///
+        /// Reference code: https://www.zsh.org/mla/users/2011/msg00154.html
+        ///
+        /// Note: this will mutate `line` in-place.
+        fn zsh_unmetafy(line: &mut [u8]) -> usize {
+            const ZSH_META: u8 = 0x83;
+
+            let Some(mut p) = line.iter().position(|&x| x == ZSH_META) else {
+                return line.len();
+            };
+            let mut t = p;
+            while p < line.len() {
+                line[t] = line[p];
+                p += 1;
+
+                if line[t] == ZSH_META {
+                    line[t] = line[p] ^ 32;
+                    p += 1;
+                }
+                t += 1;
+            }
+            t
+        }
+
         match self.provider {
             HistoryProvider::Zsh
             | HistoryProvider::Atuin
@@ -96,7 +121,13 @@ impl Iterator for History {
                     if buf.is_empty() {
                         return if block.is_empty() { None } else { Some(block) };
                     }
-                    let str = String::from_utf8_lossy(&buf).trim_end().to_owned();
+                    let str_bytes = if self.provider == HistoryProvider::Zsh {
+                        let len = zsh_unmetafy(&mut buf);
+                        &buf[..len]
+                    } else {
+                        &buf
+                    };
+                    let str = String::from_utf8_lossy(str_bytes).trim_end().to_owned();
                     block += &str;
                     if str.is_empty() {
                         buf.clear();
